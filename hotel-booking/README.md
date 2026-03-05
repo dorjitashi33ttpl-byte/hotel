@@ -1,25 +1,29 @@
-# Hotel Booking & Management SaaS
+# Hotel Booking & Management SaaS (Production-Ready)
 
-A multi-tenant SaaS platform for hotel bookings, management, and staff scheduling.
+A comprehensive, multi-tenant SaaS platform for Bhutanese and international hotel markets.
 
-## Features
-- Multi-tenant isolation
-- Dual Inventory Model (Room-type vs Fixed Room)
-- Payment Orchestration Layer (Stripe, Razorpay, Local Bank)
-- Multi-country ready (Bhutan first)
-- Mapbox integration for routes and distance
-- Staff Shift Management
-- Partner API for OTA integrations
+## Tech Stack
+- **Backend**: FastAPI (Async), PostgreSQL + PostGIS, Redis, SQLAlchemy 2.0, Celery.
+- **Frontend**: React 18, TypeScript, Vite, TailwindCSS, Mapbox GL.
+- **Mobile**: React Native, Expo, Mapbox.
+- **Infrastructure**: Docker, k6, Locust.
 
-## Structure
-- `backend/`: FastAPI + PostgreSQL + PostGIS + Redis
-- `frontend/`: React + TypeScript + Tailwind
-- `mobile/`: React Native + Expo
+## Directory Structure
+- `backend/`: API, Workers, Models, Services.
+- `frontend/`: Web dashboards and booking portal.
+- `mobile/`: iOS/Android guest application.
 
-## Getting Started
-```bash
-docker-compose up --build
-```
+## Quick Start
+1. `docker-compose up --build`
+2. Backend is at `http://localhost:8000`
+3. Frontend is at `http://localhost:5173`
 
-## Deployment
-See specific READMEs in each directory for cloud deployment guides.
+## Features Included
+- Dual Inventory (Room-type vs Fixed-room).
+- Multi-gateway Payment Orchestration.
+- Mapbox routing and spatial search.
+- Staff shift management and automated notifications.
+- Partner API with OAuth2 and signed webhooks.
+- Multi-country localization via Admin UI.
+
+Refer to `DOCS.md` for detailed API and deployment guides.

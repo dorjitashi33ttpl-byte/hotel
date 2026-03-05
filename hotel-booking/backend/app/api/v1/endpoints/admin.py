@@ -1,12 +1,35 @@
 import csv
+import io
 from fastapi import APIRouter, Depends, HTTPException, UploadFile, File
+from fastapi.responses import StreamingResponse
 from sqlalchemy.orm import Session
 from typing import List
 from app.api import deps
 from app.models.tenant import Country, Tenant
-from app.models.payment import PaymentProviderConfig
+from app.models.payment import PaymentProviderConfig, Payout
 
 router = APIRouter()
+
+@router.get("/reports/payouts/export-csv")
+def export_payouts_csv(
+    db: Session = Depends(deps.get_db),
+    current_user = Depends(deps.RoleChecker(["platform_admin"]))
+):
+    payouts = db.query(Payout).all()
+    output = io.StringIO()
+    writer = csv.DictWriter(output, fieldnames=["id", "tenant_id", "amount", "currency", "status", "payout_date"])
+    writer.writeheader()
+    for p in payouts:
+        writer.writerow({
+            "id": p.id,
+            "tenant_id": p.tenant_id,
+            "amount": p.amount,
+            "currency": p.currency,
+            "status": p.status,
+            "payout_date": p.payout_date
+        })
+    output.seek(0)
+    return StreamingResponse(output, media_type="text/csv", headers={"Content-Disposition": "attachment; filename=payouts.csv"})
 
 @router.post("/countries/import-csv")
 async def import_countries_csv(
@@ -17,21 +40,10 @@ async def import_countries_csv(
     content = await file.read()
     decoded = content.decode('utf-8').splitlines()
     reader = csv.DictReader(decoded)
-
-    count = 0
     for row in reader:
-        country = Country(
-            name=row['name'],
-            iso_code=row['iso_code'],
-            currency=row['currency'],
-            timezone=row['timezone'],
-            is_active=True
-        )
-        db.add(country)
-        count += 1
-
+        db.add(Country(name=row['name'], iso_code=row['iso_code'], currency=row['currency'], is_active=True))
     db.commit()
-    return {"status": "success", "imported_count": count}
+    return {"status": "success"}
 
 @router.patch("/tenants/{tenant_id}/approve")
 def approve_tenant(
@@ -40,26 +52,7 @@ def approve_tenant(
     current_user = Depends(deps.RoleChecker(["platform_admin", "support_agent"]))
 ):
     tenant = db.query(Tenant).filter(Tenant.id == tenant_id).first()
-    if not tenant:
-        raise HTTPException(status_code=404, detail="Tenant not found")
+    if not tenant: raise HTTPException(status_code=404, detail="Tenant not found")
     tenant.is_active = True
     db.commit()
-    return {"status": "approved", "tenant_id": tenant_id}
-
-@router.post("/payments/config")
-def configure_payment_provider(
-    country_id: int,
-    provider_type: str,
-    config_data: dict,
-    db: Session = Depends(deps.get_db),
-    current_user = Depends(deps.RoleChecker(["platform_admin"]))
-):
-    config = PaymentProviderConfig(
-        country_id=country_id,
-        provider_type=provider_type,
-        config_data=config_data,
-        is_enabled=True
-    )
-    db.add(config)
-    db.commit()
-    return config
+    return {"status": "approved"}

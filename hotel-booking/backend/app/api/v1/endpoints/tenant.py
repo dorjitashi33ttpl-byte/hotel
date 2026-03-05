@@ -4,13 +4,13 @@ from typing import List
 from app.api import deps
 from app.models.hotel import Hotel, RoomType, Room
 from app.services.storage import storage_service
+from app.services.commission import commission_service
 
 router = APIRouter()
 
 @router.post("/hotels")
 def create_hotel(
-    name: str,
-    address: str,
+    name: str, address: str,
     db: Session = Depends(deps.get_db),
     current_user = Depends(deps.RoleChecker(["hotel_owner_admin"]))
 ):
@@ -19,30 +19,16 @@ def create_hotel(
     db.commit()
     return hotel
 
-@router.post("/hotels/{hotel_id}/menu-pdf")
-async def upload_menu_pdf(
-    hotel_id: int,
-    file: UploadFile = File(...),
-    db: Session = Depends(deps.get_db),
-    current_user = Depends(deps.RoleChecker(["hotel_manager", "hotel_owner_admin"]))
-):
-    hotel = db.query(Hotel).filter(Hotel.id == hotel_id, Hotel.tenant_id == current_user.tenant_id).first()
-    if not hotel:
-        raise HTTPException(status_code=404, detail="Hotel not found or permission denied")
-
-    content = await file.read()
-    filename = f"hotel_{hotel_id}_menu_{file.filename}"
-    url = await storage_service.upload_file(content, filename)
-
-    hotel.menu_pdf_url = url
-    db.commit()
-    return {"status": "success", "menu_pdf_url": url}
-
-@router.get("/hotels/{hotel_id}/rooms")
-def list_rooms(
-    hotel_id: int,
+@router.post("/rooms/types")
+def add_room_type(
+    hotel_id: int, name: str, base_price: float,
     db: Session = Depends(deps.get_db),
     current_user = Depends(deps.get_current_active_user)
 ):
-    # Enforce tenant isolation via current_user.tenant_id
-    return db.query(RoomType).filter(RoomType.hotel_id == hotel_id).all()
+    if not commission_service.check_plan_limits(db, current_user.tenant_id, "room_type_count"):
+        raise HTTPException(status_code=403, detail="Plan limit reached. Upgrade to add more room types.")
+
+    rt = RoomType(hotel_id=hotel_id, name=name, base_price=base_price, total_quantity=1)
+    db.add(rt)
+    db.commit()
+    return rt

@@ -17,11 +17,13 @@ class Hotel(Base):
     amenities = Column(JSON, default=[])
     media = Column(JSON, default=[])
     menu_pdf_url = Column(String, nullable=True)
+    reputation_score = Column(Float, default=0.0)
 
     tenant = relationship("Tenant")
     room_types = relationship("RoomType", back_populates="hotel")
     rate_plans = relationship("RatePlan", back_populates="hotel")
     policies = relationship("Policy", back_populates="hotel")
+    channel_configs = relationship("ChannelConfig", back_populates="hotel")
 
 class RoomType(Base):
     __tablename__ = "room_types"
@@ -69,8 +71,18 @@ class Policy(Base):
     __tablename__ = "policies"
     id = Column(Integer, primary_key=True, index=True)
     hotel_id = Column(Integer, ForeignKey("hotels.id"))
-    type = Column(String) # CANCELLATION, HOUSE_RULES, CHECK_IN_OUT
+    type = Column(String) # CANCELLATION, HOUSE_RULES
     content = Column(String)
     is_active = Column(Boolean, default=True)
 
     hotel = relationship("Hotel", back_populates="policies")
+
+class ChannelConfig(Base):
+    __tablename__ = "channel_configs"
+    id = Column(Integer, primary_key=True, index=True)
+    hotel_id = Column(Integer, ForeignKey("hotels.id"))
+    channel_name = Column(String)
+    allocation_percentage = Column(Float, default=100.0)
+    is_active = Column(Boolean, default=True)
+
+    hotel = relationship("Hotel", back_populates="channel_configs")

@@ -1,11 +1,11 @@
 from datetime import datetime
 from sqlalchemy.orm import Session
+from sqlalchemy import func
 from app.worker.celery_app import celery_app
 from app.db.session import SessionLocal
 from app.models.booking import Booking, BookingStatus
-from app.models.user import User
-from app.models.partner import WebhookLog
-from app.services.webhooks import webhook_dispatcher
+from app.models.review import Review
+from app.models.hotel import Hotel
 
 @celery_app.task
 def cleanup_expired_holds():
@@ -19,34 +19,13 @@ def cleanup_expired_holds():
         db.close()
 
 @celery_app.task
-def deliver_partner_webhook(partner_id: int, event: str, payload: dict, endpoint_url: str, secret: str):
+def update_reputation_scores():
     db = SessionLocal()
     try:
-        # 1. Dispatch
-        # status_code = await webhook_dispatcher.dispatch_event(event, payload, endpoint_url, secret)
-        # Mock status for demo
-        status_code = 200
-
-        # 2. Log result
-        log = WebhookLog(
-            partner_id=partner_id,
-            event_type=event,
-            payload=payload,
-            status_code=status_code,
-            delivered_at=datetime.utcnow()
-        )
-        db.add(log)
+        hotels = db.query(Hotel).all()
+        for hotel in hotels:
+            avg_rating = db.query(func.avg(Review.rating)).filter(Review.hotel_id == hotel.id, Review.is_verified == True).scalar()
+            hotel.reputation_score = avg_rating or 0.0
         db.commit()
-        return status_code
-    finally:
-        db.close()
-
-@celery_app.task
-def send_booking_confirmation_email(booking_id: int):
-    db = SessionLocal()
-    try:
-        booking = db.query(Booking).filter(Booking.id == booking_id).first()
-        focal = db.query(User).filter(User.tenant_id == booking.tenant_id, User.is_focal_person == True).first()
-        return f"Confirmation sent (Focal: {focal.full_name if focal else 'N/A'})"
     finally:
         db.close()

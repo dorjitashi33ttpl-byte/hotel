@@ -1,4 +1,4 @@
-from sqlalchemy import Column, String, Integer, ForeignKey, Boolean, Float, JSON
+from sqlalchemy import Column, String, Integer, ForeignKey, Boolean, Float, JSON, Date
 from sqlalchemy.orm import relationship
 from geoalchemy2 import Geometry
 from .base import Base
@@ -20,7 +20,8 @@ class Hotel(Base):
 
     tenant = relationship("Tenant")
     room_types = relationship("RoomType", back_populates="hotel")
-    channel_configs = relationship("ChannelConfig", back_populates="hotel")
+    rate_plans = relationship("RatePlan", back_populates="hotel")
+    policies = relationship("Policy", back_populates="hotel")
 
 class RoomType(Base):
     __tablename__ = "room_types"
@@ -43,12 +44,33 @@ class Room(Base):
 
     room_type = relationship("RoomType", back_populates="rooms")
 
-class ChannelConfig(Base):
-    __tablename__ = "channel_configs"
+class RatePlan(Base):
+    __tablename__ = "rate_plans"
     id = Column(Integer, primary_key=True, index=True)
     hotel_id = Column(Integer, ForeignKey("hotels.id"))
-    channel_name = Column(String) # direct, partner_ota
-    allocation_percentage = Column(Float, default=100.0)
+    name = Column(String)
     is_active = Column(Boolean, default=True)
 
-    hotel = relationship("Hotel", back_populates="channel_configs")
+    hotel = relationship("Hotel", back_populates="rate_plans")
+    seasonal_rates = relationship("SeasonalRate", back_populates="rate_plan")
+
+class SeasonalRate(Base):
+    __tablename__ = "seasonal_rates"
+    id = Column(Integer, primary_key=True, index=True)
+    rate_plan_id = Column(Integer, ForeignKey("rate_plans.id"))
+    start_date = Column(Date)
+    end_date = Column(Date)
+    multiplier = Column(Float, default=1.0)
+    fixed_price = Column(Float, nullable=True)
+
+    rate_plan = relationship("RatePlan", back_populates="seasonal_rates")
+
+class Policy(Base):
+    __tablename__ = "policies"
+    id = Column(Integer, primary_key=True, index=True)
+    hotel_id = Column(Integer, ForeignKey("hotels.id"))
+    type = Column(String) # CANCELLATION, HOUSE_RULES, CHECK_IN_OUT
+    content = Column(String)
+    is_active = Column(Boolean, default=True)
+
+    hotel = relationship("Hotel", back_populates="policies")

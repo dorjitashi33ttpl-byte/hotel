@@ -26,3 +26,29 @@ if (signature === digest) { /* valid */ }
 - **hotel_manager**: Property-level operations and shift management.
 - **hotel_staff**: Check-ins, walk-ins, and guest communication.
 - **customer**: Booking and verified reviews.
+
+
+## Detailed Webhook Verification (Python Example)
+```python
+import hmac
+import hashlib
+import json
+
+def verify_signature(payload_dict, signature, secret):
+    payload_bytes = json.dumps(payload_dict, sort_keys=True).encode()
+    expected = hmac.new(secret.encode(), payload_bytes, hashlib.sha256).hexdigest()
+    return hmac.compare_digest(expected, signature)
+```
+
+## Detailed Webhook Verification (Node.js Example)
+```javascript
+const crypto = require('crypto');
+
+function verifySignature(payload, signature, secret) {
+    const expected = crypto
+        .createHmac('sha256', secret)
+        .update(JSON.stringify(payload)) // Note: Ensure key sorting if needed
+        .digest('hex');
+    return crypto.timingSafeEqual(Buffer.from(signature), Buffer.from(expected));
+}
+```

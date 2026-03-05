@@ -10,24 +10,47 @@ from app.api import deps
 from app.models.tenant import Country, Tenant
 from app.models.payment import PaymentProviderConfig, Payout, CommissionLedger
 from app.models.partner import PartnerApp
+from app.services.payment_config import payment_config_service
 
 router = APIRouter()
 
-@router.get("/reports/commission-summary")
-def get_commission_summary(
+@router.post("/payments/config")
+def configure_payment_provider(
+    country_id: int,
+    provider_type: str,
+    raw_credentials: str,
+    config_data: dict,
     db: Session = Depends(deps.get_db),
     current_user = Depends(deps.RoleChecker(["platform_admin"]))
 ):
-    # Calculate total platform commission earned
-    summary = db.query(
-        func.sum(CommissionLedger.commission_amount).label("total_commission"),
-        func.count(CommissionLedger.id).label("booking_count")
+    # Harden credential storage
+    encrypted = payment_config_service.encrypt_credentials(raw_credentials)
+
+    config = db.query(PaymentProviderConfig).filter(
+        PaymentProviderConfig.country_id == country_id,
+        PaymentProviderConfig.provider_type == provider_type
     ).first()
-    return {
-        "total_commission": summary.total_commission or 0.0,
-        "booking_count": summary.booking_count or 0,
-        "currency": "BTN"
-    }
+
+    if config:
+        config.credentials_encrypted = encrypted
+        config.config_data = config_data
+    else:
+        config = PaymentProviderConfig(
+            country_id=country_id,
+            provider_type=provider_type,
+            credentials_encrypted=encrypted,
+            config_data=config_data,
+            is_enabled=True
+        )
+        db.add(config)
+
+    db.commit()
+    return {"status": "success", "provider": provider_type}
+
+@router.get("/reports/commission-summary")
+def get_commission_summary(db: Session = Depends(deps.get_db), current_user = Depends(deps.RoleChecker(["platform_admin"]))):
+    summary = db.query(func.sum(CommissionLedger.commission_amount).label("total_commission"), func.count(CommissionLedger.id).label("booking_count")).first()
+    return {"total_commission": summary.total_commission or 0.0, "booking_count": summary.booking_count or 0, "currency": "BTN"}
 
 @router.get("/reports/payouts/export-csv")
 def export_payouts_csv(db: Session = Depends(deps.get_db), current_user = Depends(deps.RoleChecker(["platform_admin"]))):

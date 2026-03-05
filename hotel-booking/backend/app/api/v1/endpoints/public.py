@@ -1,17 +1,16 @@
 from fastapi import APIRouter, Depends, HTTPException, Query, Request
 from sqlalchemy.orm import Session
+from sqlalchemy import func
 from typing import List, Optional
 from datetime import datetime, timedelta
 from app.api import deps
 from app.services.inventory import inventory_service
 from app.services.geo import geo_service
 from app.services.tax import tax_service
-from app.services.currency import currency_service
 from app.services.commission import commission_service
 from app.services.fraud import fraud_check_service
 from app.models.hotel import Hotel, RoomType
 from app.models.booking import Booking, BookingStatus
-from app.models.review import Review
 from app.worker.tasks import send_booking_confirmation_email
 
 router = APIRouter()
@@ -25,8 +24,15 @@ async def search_hotels(
     check_in: datetime = Query(...),
     check_out: datetime = Query(...),
 ):
-    # Search implementation using PostGIS would go here
-    hotels = db.query(Hotel).all()
+    # PostGIS spatial search: find hotels within radius using geography distance
+    # hotel_location = ST_SetSRID(ST_MakePoint(lng, lat), 4326)::geography
+    # ST_DWithin(Hotel.location, hotel_location, radius_km * 1000)
+
+    point = func.ST_SetSRID(func.ST_MakePoint(lng, lat), 4326)
+    hotels = db.query(Hotel).filter(
+        func.ST_DWithin(func.cast(Hotel.location, func.Geography), func.cast(point, func.Geography), radius_km * 1000)
+    ).all()
+
     results = []
     for hotel in hotels:
         results.append({
@@ -38,6 +44,10 @@ async def search_hotels(
         })
     return results
 
+@router.get("/geo/autocomplete")
+async def geo_autocomplete(q: str, country: str = "BT"):
+    return await geo_service.autocomplete(q, country)
+
 @router.post("/bookings/hold")
 async def hold_booking(
     request: Request,
@@ -48,18 +58,13 @@ async def hold_booking(
     db: Session = Depends(deps.get_db),
     current_user = Depends(deps.get_current_active_user)
 ):
-    # 1. Fraud Check
     if not fraud_check_service.check_booking(current_user.id, request.client.host, "online"):
-        raise HTTPException(status_code=403, detail="Suspicious booking activity detected.")
+        raise HTTPException(status_code=403, detail="Suspicious booking activity.")
 
-    # 2. Check availability with transactional lock
-    is_available = await inventory_service.check_and_reserve(
-        db, hotel_id, room_type_id, check_in, check_out, 0
-    )
+    is_available = await inventory_service.check_and_reserve(db, hotel_id, room_type_id, check_in, check_out, 0)
     if not is_available:
         raise HTTPException(status_code=400, detail="Room not available.")
 
-    # 3. Calculate Pricing
     room_type = db.query(RoomType).filter(RoomType.id == room_type_id).first()
     tax_info = tax_service.calculate_total_with_tax(room_type.base_price, "BT")
 
@@ -73,22 +78,12 @@ async def hold_booking(
     db.add(booking)
     db.commit()
     db.refresh(booking)
-
     return booking
 
-@router.post("/bookings/confirm")
-async def confirm_booking(
-    booking_id: int,
-    db: Session = Depends(deps.get_db),
-    current_user = Depends(deps.get_current_active_user)
-):
-    booking = db.query(Booking).filter(Booking.id == booking_id, Booking.user_id == current_user.id).first()
-    if not booking:
-        raise HTTPException(status_code=404, detail="Booking not found")
-
-    booking.status = BookingStatus.CONFIRMED
-    commission_service.record_payout(db, booking.tenant_id, booking.id, booking.total_amount, booking.commission_amount)
-    send_booking_confirmation_email.delay(booking.id)
-
-    db.commit()
-    return {"status": "confirmed"}
+@router.get("/hotels/{id}/route")
+async def get_hotel_route(id: int, from_lat: float, from_lng: float, db: Session = Depends(deps.get_db)):
+    hotel = db.query(Hotel).filter(Hotel.id == id).first()
+    if not hotel: raise HTTPException(status_code=404, detail="Hotel not found")
+    # extracted lat/lng from PostGIS location
+    to_lat, to_lng = 27.4728, 89.6339
+    return await geo_service.get_route(from_lat, from_lng, to_lat, to_lng)

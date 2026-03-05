@@ -1,66 +1,62 @@
 from sqlalchemy.orm import Session
 from app.models.tenant import Country, Tenant
 from app.models.payment import PaymentProviderConfig
+from app.models.hotel import Hotel, RoomType, InventoryMode
+from app.models.user import User
 
 def seed_data(db: Session):
-    # Seed Country
+    # 1. Seed Country: Bhutan
     bhutan = db.query(Country).filter(Country.iso_code == "BT").first()
     if not bhutan:
         bhutan = Country(
-            name="Bhutan",
-            iso_code="BT",
-            currency="BTN",
-            timezone="Asia/Thimphu",
-            phone_format="+975-XXXXXXX",
-            is_active=True,
+            name="Bhutan", iso_code="BT", currency="BTN", timezone="Asia/Thimphu",
+            phone_format="+975-XXXXXXX", is_active=True,
             settings={
-                "support_contact": "+975-2-333333",
-                "default_language": "dz",
-                "map_key_enabled": True,
-                "features": {
-                    "chat": True,
-                    "digital_checkin": False,
-                    "pre_arrival_forms": True
-                }
+                "dzongkhags": ["Thimphu", "Paro", "Punakha", "Bumthang", "Phuentsholing"],
+                "features": {"chat": True, "digital_checkin": True}
             }
         )
         db.add(bhutan)
         db.commit()
         db.refresh(bhutan)
 
-    # Seed Payment Providers for Bhutan
-    stripe_config = db.query(PaymentProviderConfig).filter(
-        PaymentProviderConfig.country_id == bhutan.id,
-        PaymentProviderConfig.provider_type == "stripe"
-    ).first()
-    if not stripe_config:
-        db.add(PaymentProviderConfig(
-            country_id=bhutan.id,
-            provider_type="stripe",
-            credentials_encrypted="encrypted_mock_key",
-            is_enabled=True,
-            config_data={"api_version": "2023-10-16"}
-        ))
+    # 2. Seed a Sample Tenant (Hotel Owner)
+    owner = db.query(User).filter(User.email == "owner@heritage.bt").first()
+    if not owner:
+        tenant = Tenant(name="Heritage Bhutan Group", slug="heritage-bt", country_id=bhutan.id, is_active=True)
+        db.add(tenant)
+        db.commit()
+        db.refresh(tenant)
 
-    bank_config = db.query(PaymentProviderConfig).filter(
-        PaymentProviderConfig.country_id == bhutan.id,
-        PaymentProviderConfig.provider_type == "local_bank"
-    ).first()
-    if not bank_config:
-        db.add(PaymentProviderConfig(
-            country_id=bhutan.id,
-            provider_type="local_bank",
-            credentials_encrypted="none",
-            is_enabled=True,
-            config_data={
-                "bank_name": "Bank of Bhutan",
-                "redirect_url_template": "https://bob.bt/pay?bid={{booking_id}}&amt={{amount}}",
-                "signature_key": "secret_key"
-            }
-        ))
+        owner = User(
+            email="owner@heritage.bt", hashed_password="hashed_password",
+            full_name="Jigme Dorji", role="hotel_owner_admin", tenant_id=tenant.id
+        )
+        db.add(owner)
+        db.commit()
 
-    db.commit()
-    print("Seed data completed for Bhutan.")
+    # 3. Seed a Sample Hotel
+    hotel = db.query(Hotel).filter(Hotel.name == "Thimphu Heritage Lodge").first()
+    if not hotel:
+        hotel = Hotel(
+            tenant_id=owner.tenant_id, name="Thimphu Heritage Lodge",
+            description="Authentic Bhutanese hospitality in the heart of the capital.",
+            address="Norzin Lam, Thimphu", city="Thimphu", state="Thimphu",
+            inventory_mode=InventoryMode.ROOM_TYPE,
+            amenities=["Wifi", "Spa", "Restaurant", "Traditional Bath"]
+        )
+        db.add(hotel)
+        db.commit()
+        db.refresh(hotel)
+
+    # 4. Seed Room Types
+    rt = db.query(RoomType).filter(RoomType.hotel_id == hotel.id).first()
+    if not rt:
+        db.add(RoomType(hotel_id=hotel.id, name="Deluxe Heritage Room", base_price=5500.0, capacity=2, total_quantity=10))
+        db.add(RoomType(hotel_id=hotel.id, name="Royal Suite", base_price=12000.0, capacity=3, total_quantity=2))
+        db.commit()
+
+    print("Deep seed data for Bhutan completed.")
 
 if __name__ == "__main__":
     from app.db.session import SessionLocal

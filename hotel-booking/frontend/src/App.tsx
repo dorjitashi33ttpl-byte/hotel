@@ -3,6 +3,7 @@ import { BrowserRouter, Routes, Route, Link } from 'react-router-dom';
 import { QueryClient, QueryClientProvider } from 'react-query';
 import { TenantDashboard } from './pages/TenantDashboard';
 import { BookingFlow } from './pages/BookingFlow';
+import { DigitalCheckIn } from './pages/DigitalCheckIn';
 import { CountrySettings } from './components/admin/CountrySettings';
 import { PaymentRegistry } from './components/admin/PaymentRegistry';
 
@@ -31,6 +32,7 @@ function App() {
               <Route path="/" element={<div className="p-20 text-center"><h1 className="text-5xl font-black">Experience Bhutan.</h1><p className="mt-4 text-gray-500">Premium hotels, local hospitality, seamless bookings.</p></div>} />
               <Route path="/search" element={<div className="p-10">Search Results & Map...</div>} />
               <Route path="/hotel/:id/book" element={<BookingFlow hotelId={1} roomTypeId={1} />} />
+              <Route path="/checkin/:booking_id" element={<DigitalCheckIn />} />
               <Route path="/tenant/*" element={<TenantDashboard />} />
               <Route path="/admin" element={
                 <div className="space-y-8">

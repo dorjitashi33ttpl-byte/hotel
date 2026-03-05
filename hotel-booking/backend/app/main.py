@@ -1,9 +1,13 @@
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
+from prometheus_client import make_asgi_app
 from app.core.config import settings
+from app.core.logging import setup_logging
 from app.api.v1.endpoints import (
     public, admin, tenant, partner, checkin, walkin, calendar, chat, auth
 )
+
+setup_logging()
 
 app = FastAPI(
     title=settings.PROJECT_NAME,
@@ -18,6 +22,10 @@ if settings.BACKEND_CORS_ORIGINS:
         allow_methods=["*"],
         allow_headers=["*"],
     )
+
+# Prometheus metrics endpoint
+metrics_app = make_asgi_app()
+app.mount("/metrics", metrics_app)
 
 app.include_router(auth.router, prefix=f"{settings.API_V1_STR}/auth", tags=["auth"])
 app.include_router(public.router, prefix=f"{settings.API_V1_STR}/public", tags=["public"])

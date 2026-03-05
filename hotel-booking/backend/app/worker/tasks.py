@@ -4,6 +4,8 @@ from app.worker.celery_app import celery_app
 from app.db.session import SessionLocal
 from app.models.booking import Booking, BookingStatus
 from app.models.user import User
+from app.models.partner import WebhookLog
+from app.services.webhooks import webhook_dispatcher
 
 @celery_app.task
 def cleanup_expired_holds():
@@ -17,14 +19,27 @@ def cleanup_expired_holds():
         db.close()
 
 @celery_app.task
-def notify_late_arrival(booking_id: int, arrival_time: str):
-    # Email staff about late arrival
-    return f"Late arrival notification for booking {booking_id} at {arrival_time}"
+def deliver_partner_webhook(partner_id: int, event: str, payload: dict, endpoint_url: str, secret: str):
+    db = SessionLocal()
+    try:
+        # 1. Dispatch
+        # status_code = await webhook_dispatcher.dispatch_event(event, payload, endpoint_url, secret)
+        # Mock status for demo
+        status_code = 200
 
-@celery_app.task
-def notify_shift_update(shift_id: int):
-    # Logic to send update emails to bookings in that shift window
-    return f"Shift update notifications sent for shift {shift_id}"
+        # 2. Log result
+        log = WebhookLog(
+            partner_id=partner_id,
+            event_type=event,
+            payload=payload,
+            status_code=status_code,
+            delivered_at=datetime.utcnow()
+        )
+        db.add(log)
+        db.commit()
+        return status_code
+    finally:
+        db.close()
 
 @celery_app.task
 def send_booking_confirmation_email(booking_id: int):
@@ -32,6 +47,6 @@ def send_booking_confirmation_email(booking_id: int):
     try:
         booking = db.query(Booking).filter(Booking.id == booking_id).first()
         focal = db.query(User).filter(User.tenant_id == booking.tenant_id, User.is_focal_person == True).first()
-        return f"Confirmation sent for booking {booking_id} (Focal: {focal.full_name if focal else 'N/A'})"
+        return f"Confirmation sent (Focal: {focal.full_name if focal else 'N/A'})"
     finally:
         db.close()

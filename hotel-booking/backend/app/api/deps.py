@@ -1,8 +1,8 @@
 from typing import Generator, Optional, List
-from fastapi import Depends, HTTPException, status
+from fastapi import Depends, HTTPException, status, Query
 from fastapi.security import OAuth2PasswordBearer
 from jose import jwt, JWTError
-from pydantic import ValidationError
+from pydantic import ValidationError, BaseModel
 from sqlalchemy.orm import Session
 from sqlalchemy import select
 from app.core.config import settings
@@ -12,6 +12,16 @@ from app.db.session import SessionLocal
 reusable_oauth2 = OAuth2PasswordBearer(
     tokenUrl=f"{settings.API_V1_STR}/login/access-token"
 )
+
+class PaginationParams(BaseModel):
+    skip: int = 0
+    limit: int = 100
+
+def get_pagination_params(
+    skip: int = Query(0, ge=0),
+    limit: int = Query(100, ge=1, le=100)
+) -> PaginationParams:
+    return PaginationParams(skip=skip, limit=limit)
 
 def get_db() -> Generator:
     try:
@@ -49,7 +59,3 @@ class RoleChecker:
         if user.role not in self.allowed_roles:
             raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail="Permission denied")
         return user
-
-def tenant_scope(db: Session, tenant_id: int, model):
-    """Utility for multi-tenant data isolation."""
-    return db.query(model).filter(model.tenant_id == tenant_id)

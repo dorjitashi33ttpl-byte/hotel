@@ -1,4 +1,5 @@
 import React, { useState } from 'react';
+import { HoldTimer } from '../components/common/HoldTimer';
 
 interface BookingFlowProps {
   hotelId: number;
@@ -8,14 +9,10 @@ interface BookingFlowProps {
 export const BookingFlow: React.FC<BookingFlowProps> = ({ hotelId, roomTypeId }) => {
   const [step, setStep] = useState(1);
   const [paymentMethod, setPaymentMethod] = useState('stripe');
+  const [expiry] = useState(new Date(Date.now() + 15 * 60000).toISOString());
 
-  const handleHold = async () => {
-    setStep(2);
-  };
-
-  const handleConfirm = async () => {
-    setStep(3);
-  };
+  const handleHold = async () => setStep(2);
+  const handleConfirm = async () => setStep(3);
 
   return (
     <div className="max-w-4xl mx-auto p-8 bg-white shadow-xl rounded-2xl border border-gray-100">
@@ -31,6 +28,8 @@ export const BookingFlow: React.FC<BookingFlowProps> = ({ hotelId, roomTypeId })
           </div>
         ))}
       </div>
+
+      {step === 2 && <div className="mb-6 flex justify-end"><HoldTimer expiry={expiry} /></div>}
 
       {step === 1 && (
         <div className="space-y-6">

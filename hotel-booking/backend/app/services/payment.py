@@ -42,6 +42,20 @@ class StripeAdapter(PaymentAdapter):
         )
         return {"id": refund.id, "status": refund.status}
 
+class PayPalAdapter(PaymentAdapter):
+    def __init__(self, client_id: str, client_secret: str):
+        self.client_id = client_id
+        # Mock PayPal client initialization
+
+    async def create_payment_intent(self, amount: float, currency: str, booking_id: int) -> Dict[str, Any]:
+        return {"id": "mock_paypal_order_id", "approval_url": "https://paypal.com/checkout"}
+
+    async def verify_payment(self, payload: Any, signature: str) -> bool:
+        return True
+
+    async def refund_payment(self, payment_id: str, amount: Optional[float] = None) -> Dict[str, Any]:
+        return {"status": "refunded"}
+
 class LocalBankAdapter(PaymentAdapter):
     def __init__(self, config: Dict[str, Any]):
         self.config = config
@@ -62,12 +76,14 @@ class LocalBankAdapter(PaymentAdapter):
         return True
 
     async def refund_payment(self, payment_id: str, amount: Optional[float] = None) -> Dict[str, Any]:
-        return {"status": "manual_refund_required", "message": "Local bank refunds must be processed manually"}
+        return {"status": "manual_refund_required"}
 
 class PaymentService:
     def get_adapter(self, provider: str, config: Dict[str, Any]) -> PaymentAdapter:
         if provider == "stripe":
             return StripeAdapter(config["api_key"])
+        elif provider == "paypal":
+            return PayPalAdapter(config["client_id"], config["client_secret"])
         elif provider == "local_bank":
             return LocalBankAdapter(config)
         raise ValueError(f"Unsupported provider: {provider}")

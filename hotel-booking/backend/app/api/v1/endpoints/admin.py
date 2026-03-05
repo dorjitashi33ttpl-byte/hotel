@@ -1,4 +1,5 @@
-from fastapi import APIRouter, Depends, HTTPException
+import csv
+from fastapi import APIRouter, Depends, HTTPException, UploadFile, File
 from sqlalchemy.orm import Session
 from typing import List
 from app.api import deps
@@ -7,22 +8,30 @@ from app.models.payment import PaymentProviderConfig
 
 router = APIRouter()
 
-@router.post("/countries")
-def create_country(
-    name: str,
-    iso_code: str,
+@router.post("/countries/import-csv")
+async def import_countries_csv(
+    file: UploadFile = File(...),
     db: Session = Depends(deps.get_db),
     current_user = Depends(deps.RoleChecker(["platform_admin"]))
 ):
-    country = Country(name=name, iso_code=iso_code)
-    db.add(country)
-    db.commit()
-    db.refresh(country)
-    return country
+    content = await file.read()
+    decoded = content.decode('utf-8').splitlines()
+    reader = csv.DictReader(decoded)
 
-@router.get("/countries", response_model=List[dict])
-def list_countries(db: Session = Depends(deps.get_db)):
-    return db.query(Country).all()
+    count = 0
+    for row in reader:
+        country = Country(
+            name=row['name'],
+            iso_code=row['iso_code'],
+            currency=row['currency'],
+            timezone=row['timezone'],
+            is_active=True
+        )
+        db.add(country)
+        count += 1
+
+    db.commit()
+    return {"status": "success", "imported_count": count}
 
 @router.patch("/tenants/{tenant_id}/approve")
 def approve_tenant(
@@ -36,13 +45,6 @@ def approve_tenant(
     tenant.is_active = True
     db.commit()
     return {"status": "approved", "tenant_id": tenant_id}
-
-@router.get("/tenants/pending", response_model=List[dict])
-def list_pending_tenants(
-    db: Session = Depends(deps.get_db),
-    current_user = Depends(deps.RoleChecker(["platform_admin", "support_agent"]))
-):
-    return db.query(Tenant).filter(Tenant.is_active == False).all()
 
 @router.post("/payments/config")
 def configure_payment_provider(

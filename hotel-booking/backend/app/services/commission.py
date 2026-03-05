@@ -10,7 +10,12 @@ class CommissionService:
     @staticmethod
     def record_payout(db: Session, tenant_id: int, gross_total: float, platform_commission: float):
         # Implementation for payout reporting logic
-        # Records ledger: gross, commission, net to hotel
+        return True
+
+    @staticmethod
+    def check_plan_limits(db: Session, tenant_id: int, feature: str) -> bool:
+        # Plans: Silver, Gold, Platinum
+        # Platinum has unlimited everything; Silver has limits on staff count
         return True
 
 commission_service = CommissionService()

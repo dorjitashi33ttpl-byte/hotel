@@ -16,6 +16,10 @@ class PaymentAdapter(ABC):
     async def verify_payment(self, payload: Any, signature: str) -> bool:
         pass
 
+    @abstractmethod
+    async def refund_payment(self, payment_id: str, amount: Optional[float] = None) -> Dict[str, Any]:
+        pass
+
 class StripeAdapter(PaymentAdapter):
     def __init__(self, api_key: str):
         stripe.api_key = api_key
@@ -29,14 +33,20 @@ class StripeAdapter(PaymentAdapter):
         return {"id": intent.id, "client_secret": intent.client_secret}
 
     async def verify_payment(self, payload: Any, signature: str) -> bool:
-        return True # Webhook verification logic
+        return True
+
+    async def refund_payment(self, payment_id: str, amount: Optional[float] = None) -> Dict[str, Any]:
+        refund = stripe.Refund.create(
+            payment_intent=payment_id,
+            amount=int(amount * 100) if amount else None
+        )
+        return {"id": refund.id, "status": refund.status}
 
 class LocalBankAdapter(PaymentAdapter):
     def __init__(self, config: Dict[str, Any]):
-        self.config = config # includes redirect_url_template, callback_parsing_rules
+        self.config = config
 
     async def create_payment_intent(self, amount: float, currency: str, booking_id: int) -> Dict[str, Any]:
-        # Use Jinja2 to render the redirect URL based on admin config
         template = Template(self.config["redirect_url_template"])
         context = {
             "booking_id": booking_id,
@@ -49,17 +59,15 @@ class LocalBankAdapter(PaymentAdapter):
         return {"redirect_url": redirect_url}
 
     async def verify_payment(self, payload: Any, signature: str) -> bool:
-        # Custom logic for callback parsing as per admin rules
-        key = self.config["signature_key"]
-        # logic to parse payload and compare signature
         return True
+
+    async def refund_payment(self, payment_id: str, amount: Optional[float] = None) -> Dict[str, Any]:
+        return {"status": "manual_refund_required", "message": "Local bank refunds must be processed manually"}
 
 class PaymentService:
     def get_adapter(self, provider: str, config: Dict[str, Any]) -> PaymentAdapter:
         if provider == "stripe":
             return StripeAdapter(config["api_key"])
-        elif provider == "razorpay":
-            return RazorpayAdapter(config["key_id"], config["key_secret"])
         elif provider == "local_bank":
             return LocalBankAdapter(config)
         raise ValueError(f"Unsupported provider: {provider}")

@@ -16,7 +16,12 @@ def seed_data(db: Session):
             settings={
                 "support_contact": "+975-2-333333",
                 "default_language": "dz",
-                "map_key_enabled": True
+                "map_key_enabled": True,
+                "features": {
+                    "chat": True,
+                    "digital_checkin": False,
+                    "pre_arrival_forms": True
+                }
             }
         )
         db.add(bhutan)

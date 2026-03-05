@@ -7,6 +7,7 @@ from app.services.inventory import inventory_service
 from app.services.geo import geo_service
 from app.models.hotel import Hotel, RoomType
 from app.models.booking import Booking, BookingStatus
+from app.models.review import Review
 
 router = APIRouter()
 
@@ -35,31 +36,36 @@ async def search_hotels(
 async def geo_autocomplete(q: str, country: str = "BT"):
     return await geo_service.autocomplete(q, country)
 
-@router.post("/bookings/hold")
-async def hold_booking(
+@router.post("/reviews/submit")
+async def submit_review(
     hotel_id: int,
-    room_type_id: int,
-    check_in: datetime,
-    check_out: datetime,
+    booking_id: int,
+    rating: float,
+    comment: str,
     db: Session = Depends(deps.get_db),
     current_user = Depends(deps.get_current_active_user)
 ):
-    is_available = await inventory_service.check_and_reserve(
-        db, hotel_id, room_type_id, check_in, check_out, 0 # placeholder booking_id
-    )
-    if not is_available:
-        raise HTTPException(status_code=400, detail="Room not available for selected dates")
+    # Enforce verified review logic
+    booking = db.query(Booking).filter(
+        Booking.id == booking_id,
+        Booking.user_id == current_user.id,
+        Booking.status == BookingStatus.COMPLETED
+    ).first()
 
-    booking = Booking(
-        tenant_id=1,
+    if not booking:
+        raise HTTPException(
+            status_code=400,
+            detail="Only verified guests with completed bookings can leave reviews."
+        )
+
+    review = Review(
         hotel_id=hotel_id,
+        booking_id=booking_id,
         user_id=current_user.id,
-        room_type_id=room_type_id,
-        check_in=check_in,
-        check_out=check_out,
-        status=BookingStatus.HOLD,
-        hold_expires_at=datetime.utcnow()
+        rating=rating,
+        comment=comment,
+        is_verified=True
     )
-    db.add(booking)
+    db.add(review)
     db.commit()
-    return booking
+    return {"status": "review_submitted"}

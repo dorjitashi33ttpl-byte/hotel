@@ -14,34 +14,28 @@ class InventoryService:
         check_out: datetime,
         booking_id: int
     ) -> bool:
-        # Use SELECT ... FOR UPDATE for transactional safety
-        # This prevents double booking by locking the relevant rows
+        # Transactional isolation for inventory selection
         hotel = db.execute(
             select(Hotel).where(Hotel.id == hotel_id).with_for_update()
         ).scalar_one_or_none()
 
         if not hotel: return False
 
-        # Mode A: Room-Type Inventory (quantity based)
         if hotel.inventory_mode == InventoryMode.ROOM_TYPE:
             room_type = db.execute(
                 select(RoomType).where(RoomType.id == room_type_id).with_for_update()
             ).scalar_one()
 
-            # Count existing confirmed/hold bookings
             count = db.query(Booking).filter(
                 Booking.room_type_id == room_type_id,
                 Booking.status.in_([BookingStatus.CONFIRMED, BookingStatus.HOLD]),
                 and_(Booking.check_in < check_out, Booking.check_out > check_in)
             ).count()
 
-            if count < room_type.total_quantity:
-                # Room available
-                return True
+            return count < room_type.total_quantity
 
-        # Mode B: Fixed Room Numbers
         else:
-            # Find an available room that isn't booked
+            # Mode B: Fixed Room Numbers - strictly assign a room during reserve/confirm
             subquery = db.query(Booking.room_id).filter(
                 Booking.room_type_id == room_type_id,
                 Booking.room_id.isnot(None),
@@ -56,9 +50,11 @@ class InventoryService:
             ).with_for_update().first()
 
             if available_room:
-                # Assign this specific room to the booking
-                booking = db.query(Booking).filter(Booking.id == booking_id).first()
-                booking.room_id = available_room.id
+                # Store the specific room ID if a booking exists
+                if booking_id > 0:
+                    booking = db.query(Booking).filter(Booking.id == booking_id).first()
+                    if booking:
+                        booking.room_id = available_room.id
                 return True
 
         return False

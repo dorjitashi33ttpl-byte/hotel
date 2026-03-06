@@ -1,54 +1,19 @@
 # Definitive Hotel Booking & Management SaaS Documentation
 
-## Local Bank Integration (Template Engine)
-Admin UI allows configuring custom redirect URLs using Jinja2 syntax:
-- **Template**: `https://bank.bt/pay?booking_id={{booking_id}}&amount={{amount}}&callback={{callback_url}}`
-- **Signature**: HMAC-SHA256 of the payload.
-- **Status Mapping**: Dynamic mapping of provider response codes to internal `success` or `failed`.
+## World-Class Features Checklist
+1. **Multi-tenant isolation**: Enforced via tenant_id scoping.
+2. **Dual Inventory**: Mode A (Room-Type) & Mode B (Fixed Room) supported.
+3. **Payment Orchestration**: Pluggable gateways + bank redirect template engine.
+4. **Multi-country Localization**: Admin CSV tools & regional tax rules.
+5. **Mapbox Experience**: Geocoding, spatial search (ST_DWithin), and route polyline preview.
+6. **Background Automation**: Celery workers for cleanup & notifications.
+7. **Partner Ecosystem**: OAuth2 API + HMAC-signed webhooks.
+8. **Real-time Operations**: WebSocket chat & staff shift scheduling.
+9. **Guest Experience**: SSO, digital check-in (QR), verified reviews.
+10. **Fraud Risk Check**: Rule-based detection service.
+11. **Pricing Insights**: Real-time RevPAR & occupancy trends.
+12. **Infrastructure**: Hardened Docker, healthchecks, PostGIS spatial indexing.
+13. **Observability**: Structured JSON logging & Prometheus metrics.
 
-## Partner Webhook Security
-Partners must verify the `X-Webhook-Signature` header.
-```javascript
-const hmac = crypto.createHmac('sha256', partner_secret);
-const digest = hmac.update(raw_body).digest('hex');
-if (signature === digest) { /* valid */ }
-```
-
-## Deployment & Scalability
-- **Production Stack**: Docker Swarm or Kubernetes.
-- **Spatial Queries**: Managed PostGIS required for `ST_DWithin` search performance.
-- **Concurrent Users**: Optimized with async FastAPI and Redis-backed session management to handle 4000+ concurrent requests.
-
-## Role Permissions (RBAC)
-- **platform_admin**: Full access to global settings and provider registry.
-- **support_agent**: Onboarding and dispute management.
-- **hotel_owner_admin**: Tenant configuration and financial reports.
-- **hotel_manager**: Property-level operations and shift management.
-- **hotel_staff**: Check-ins, walk-ins, and guest communication.
-- **customer**: Booking and verified reviews.
-
-
-## Detailed Webhook Verification (Python Example)
-```python
-import hmac
-import hashlib
-import json
-
-def verify_signature(payload_dict, signature, secret):
-    payload_bytes = json.dumps(payload_dict, sort_keys=True).encode()
-    expected = hmac.new(secret.encode(), payload_bytes, hashlib.sha256).hexdigest()
-    return hmac.compare_digest(expected, signature)
-```
-
-## Detailed Webhook Verification (Node.js Example)
-```javascript
-const crypto = require('crypto');
-
-function verifySignature(payload, signature, secret) {
-    const expected = crypto
-        .createHmac('sha256', secret)
-        .update(JSON.stringify(payload)) // Note: Ensure key sorting if needed
-        .digest('hex');
-    return crypto.timingSafeEqual(Buffer.from(signature), Buffer.from(expected));
-}
-```
+## Setup & Deployment
+Refer to service-specific READMEs in backend/, frontend/, and mobile/ directories.

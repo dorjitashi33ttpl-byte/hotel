@@ -5,6 +5,7 @@ import { PricingInsights } from '../components/tenant/PricingInsights';
 import { AuditLog } from '../components/tenant/AuditLog';
 import { MenuUpload } from '../components/tenant/MenuUpload';
 import { HoldActivityFeed } from '../components/tenant/HoldActivityFeed';
+import { WalkInBookingForm } from '../components/tenant/WalkInBookingForm';
 
 export const TenantDashboard: React.FC = () => {
   return (
@@ -16,13 +17,14 @@ export const TenantDashboard: React.FC = () => {
             <p className="text-gray-500 mt-1">Manage Thimphu Heritage Lodge</p>
           </div>
           <div className="flex gap-4">
-             <button className="bg-blue-600 text-white px-6 py-3 rounded-xl font-bold shadow-lg shadow-blue-200 hover:bg-blue-700 transition-colors">Live View</button>
-             <button className="bg-gray-100 text-gray-600 px-6 py-3 rounded-xl font-bold hover:bg-gray-200 transition-colors">Settings</button>
+             <button className="bg-blue-600 text-white px-6 py-3 rounded-xl font-bold shadow-lg shadow-blue-200">Live View</button>
+             <button className="bg-gray-100 text-gray-600 px-6 py-3 rounded-xl font-bold">Settings</button>
           </div>
         </header>
 
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
           <div className="lg:col-span-2 space-y-8">
+            <WalkInBookingForm />
             <InventoryConfig roomTypes={[]} />
             <PricingInsights />
             <StaffScheduling />
@@ -33,8 +35,8 @@ export const TenantDashboard: React.FC = () => {
             <AuditLog />
             <div className="p-8 bg-gray-900 text-white rounded-2xl shadow-xl">
                <h3 className="text-xl font-bold mb-4">Subscription</h3>
-               <p className="text-gray-400 text-sm mb-6">Plan: <span className="text-blue-400 font-bold">Platinum</span> (All features unlocked)</p>
-               <button className="w-full bg-white text-gray-900 py-3 rounded-xl font-bold hover:bg-gray-100 transition-colors">Manage Billing</button>
+               <p className="text-gray-400 text-sm mb-6">Plan: <span className="text-blue-400 font-bold">Platinum</span></p>
+               <button className="w-full bg-white text-gray-900 py-3 rounded-xl font-bold">Manage Billing</button>
             </div>
           </div>
         </div>

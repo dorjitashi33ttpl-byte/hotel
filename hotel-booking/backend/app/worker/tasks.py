@@ -7,6 +7,7 @@ from app.models.booking import Booking, BookingStatus
 from app.models.review import Review
 from app.models.hotel import Hotel
 from app.models.user import User
+from app.services.storage import storage_service
 
 @celery_app.task
 def cleanup_expired_holds():
@@ -39,14 +40,11 @@ def send_booking_confirmation_email(booking_id: int):
         hotel = db.query(Hotel).filter(Hotel.id == booking.hotel_id).first()
         focal = db.query(User).filter(User.tenant_id == booking.tenant_id, User.is_focal_person == True).first()
 
-        # Email Context includes Focal Person, Menu PDF, and Hotel Address
-        context = {
-            "booking_id": booking.id,
-            "hotel_name": hotel.name,
-            "focal_person": focal.full_name if focal else "N/A",
-            "menu_url": hotel.menu_pdf_url,
-            "address": hotel.address
-        }
-        print(f"Sending confirmation for booking {booking_id}: {context}")
+        # Using StorageService to generate a signed URL for the menu
+        menu_url = None
+        if hotel.menu_pdf_url:
+            menu_url = storage_service.get_signed_url(hotel.menu_pdf_url)
+
+        print(f"Sending confirmation for booking {booking_id} with Menu URL: {menu_url}")
     finally:
         db.close()

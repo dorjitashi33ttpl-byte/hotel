@@ -1,23 +1,12 @@
-<html>
-  <body style="font-family: sans-serif; color: #333;">
-    <h1 style="color: #2563eb;">Reservation Confirmed!</h1>
-    <p>Dear {{ guest_name }}, your booking at <strong>{{ hotel_name }}</strong> is confirmed.</p>
+{% extends "notification_base.html" %}
+{% block content %}
+<h1 style="font-weight: 900; color: #1e293b; margin-bottom: 24px;">Your stay is confirmed.</h1>
+<p style="color: #64748b; font-size: 18px; line-height: 28px;">Get ready for Bhutan! Your reservation at <strong>{{ hotel_name }}</strong> is officially booked.</p>
 
-    <div style="background: #f3f4f6; padding: 20px; border-radius: 10px;">
-      <p><strong>Check-in:</strong> {{ check_in }}</p>
-      <p><strong>Address:</strong> {{ hotel_address }}</p>
-      <p><strong>Focal Person:</strong> {{ focal_person_name }} ({{ focal_person_contact }})</p>
-      <p><strong>On-Shift Staff:</strong> {{ shift_staff_name }} ({{ shift_staff_contact }})</p>
-    </div>
+<div style="background: #eff6ff; border-radius: 16px; padding: 24px; margin: 32px 0;">
+  <p style="margin: 0; color: #1d4ed8; font-weight: bold; font-size: 14px; text-transform: uppercase;">Check-in window</p>
+  <p style="margin: 8px 0 0 0; font-size: 20px; font-weight: bold;">{{ check_in }}</p>
+</div>
 
-    {% if menu_pdf_url %}
-    <p style="margin-top: 20px;">
-      <a href="{{ menu_pdf_url }}" style="background: #2563eb; color: white; padding: 10px 20px; border-radius: 5px; text-decoration: none;">View Property Menu</a>
-    </p>
-    {% endif %}
-
-    <p style="margin-top: 30px; font-size: 12px; color: #999;">
-      Platform Support: {{ platform_support }}
-    </p>
-  </body>
-</html>
+<p style="font-size: 14px; color: #94a3b8;">Staff on shift for your arrival: <strong>{{ shift_staff }}</strong></p>
+{% endblock %}

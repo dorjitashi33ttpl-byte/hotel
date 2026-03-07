@@ -1,3 +1,4 @@
+import secrets
 from fastapi import APIRouter, Depends, HTTPException, status
 from fastapi.security import OAuth2PasswordRequestForm
 from sqlalchemy.orm import Session
@@ -20,14 +21,54 @@ def login_access_token(
 
     return {
         "access_token": security.create_access_token(user.id),
+        "refresh_token": security.create_refresh_token(user.id),
         "token_type": "bearer",
     }
 
-@router.post("/partner/token")
-def partner_token(client_id: str, client_secret: str, db: Session = Depends(deps.get_db)):
-    # Verification logic...
-    return {"access_token": security.create_access_token("partner_" + client_id), "token_type": "bearer"}
+@router.post("/refresh")
+def refresh_token(
+    token: str,
+    db: Session = Depends(deps.get_db)
+):
+    try:
+        payload = security.decode_token(token)
+        if payload.get("type") != "refresh":
+            raise HTTPException(status_code=401, detail="Invalid token type")
+        user_id = payload.get("sub")
+    except Exception:
+        raise HTTPException(status_code=401, detail="Invalid refresh token")
+
+    user = db.query(User).filter(User.id == int(user_id)).first()
+    if not user or not user.is_active:
+        raise HTTPException(status_code=401, detail="User not found or inactive")
+
+    return {
+        "access_token": security.create_access_token(user.id),
+        "token_type": "bearer",
+    }
 
 @router.post("/sso/google")
 def sso_google(token: str, db: Session = Depends(deps.get_db)):
-    return {"access_token": security.create_access_token("sso_user"), "token_type": "bearer"}
+    email = "google_user@example.com"
+    user = db.query(User).filter(User.email == email).first()
+    if not user:
+        user = User(
+            email=email,
+            hashed_password=security.get_password_hash(secrets.token_urlsafe(32)),
+            full_name="Google User",
+            role="customer",
+            is_active=True
+        )
+        db.add(user)
+        db.commit()
+        db.refresh(user)
+
+    return {
+        "access_token": security.create_access_token(user.id),
+        "refresh_token": security.create_refresh_token(user.id),
+        "token_type": "bearer",
+    }
+
+@router.post("/sso/apple")
+def sso_apple(token: str, db: Session = Depends(deps.get_db)):
+    return {"access_token": "mock_apple", "token_type": "bearer"}

@@ -6,7 +6,12 @@ export const COLORS = {
   warning: '#f59e0b',
   background: '#f8fafc',
   white: '#ffffff',
-  text: '#1e293b'
+  text: '#1e293b',
+  dark: {
+    background: '#0f172a',
+    text: '#f8fafc',
+    card: '#1e293b'
+  }
 };
 
 export const SPACING = {

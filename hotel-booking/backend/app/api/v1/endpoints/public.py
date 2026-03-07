@@ -1,5 +1,5 @@
 from fastapi import APIRouter, Depends, HTTPException, Query, Request
-from sqlalchemy.orm import Session, selectinload
+from sqlalchemy.orm import Session
 from sqlalchemy import func
 from typing import List, Optional
 from datetime import datetime, timedelta
@@ -17,13 +17,20 @@ router = APIRouter()
 
 @router.get("/recommendations")
 async def get_smart_recommendations(
+    request: Request,
     lat: float,
     lng: float,
-    country_iso: str,
-    city: Optional[str] = None,
     db: Session = Depends(deps.get_db)
 ):
-    # Strictly filtered by user location context (x city in y country)
+    # Detect Country/City from Mapbox reverse geocode
+    geo_context = await geo_service.reverse_geocode(lat, lng)
+
+    country_iso = geo_context.get("country_iso")
+    city = geo_context.get("city")
+
+    if not country_iso:
+        raise HTTPException(status_code=400, detail="Could not determine location context.")
+
     return recommendation_service.get_recommendations(db, lat, lng, country_iso, city)
 
 @router.get("/hotels/search")
@@ -33,12 +40,10 @@ async def search_hotels(
     lat: float = Query(...),
     lng: float = Query(...),
     radius_km: float = Query(10),
-    check_in: datetime = Query(...),
-    check_out: datetime = Query(...),
 ):
-    # Manual search displays all hotels within the radius, regardless of user city/country context
+    # Manual search remains global within radius
     point = func.ST_SetSRID(func.ST_MakePoint(lng, lat), 4326)
-    hotels = db.query(Hotel).filter(
+    hotels = db.query(Hotel, func.ST_Distance(func.cast(Hotel.location, func.Geography), func.cast(point, func.Geography)).label("dist")).filter(
         func.ST_DWithin(func.cast(Hotel.location, func.Geography), func.cast(point, func.Geography), radius_km * 1000)
-    ).offset(pagination.skip).limit(pagination.limit).all()
-    return hotels
+    ).order_by("dist").offset(pagination.skip).limit(pagination.limit).all()
+    return [{"id": h.id, "name": h.name, "dist_km": round(d/1000, 2)} for h, d in hotels]

@@ -17,3 +17,13 @@
 
 ## Setup & Deployment
 Refer to service-specific READMEs in backend/, frontend/, and mobile/ directories.
+
+## Multi-Channel Inventory Allocation
+The platform allows hotels to define `ChannelConfig` settings:
+- **Allocation %**: Percentage of total inventory reserved for a specific partner (e.g. Booking.com partner via API).
+- **Hardened Locks**: All allocation checks and reservations use PostgreSQL `FOR UPDATE` locks to ensure atomic consistency across concurrent search and hold requests.
+
+## Refund Orchestration
+Integrated automated refund flow for Stripe and PayPal via:
+- `POST /api/v1/tenant/payments/{id}/refund`
+- Manual review triggers for Local Bank transfers as specified in the registry.

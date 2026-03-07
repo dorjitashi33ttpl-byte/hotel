@@ -37,3 +37,13 @@ def create_hotel(name: str, address: str, db: Session = Depends(deps.get_db), cu
     db.add(hotel)
     db.commit()
     return hotel
+
+@router.post("/payments/{payment_id}/refund")
+async def tenant_refund_payment(
+    payment_id: int,
+    amount: float = None,
+    db: Session = Depends(deps.get_db),
+    current_user = Depends(deps.RoleChecker(["hotel_owner_admin", "hotel_manager"]))
+):
+    from app.services.refund import refund_service
+    return await refund_service.process_refund(db, payment_id, amount)

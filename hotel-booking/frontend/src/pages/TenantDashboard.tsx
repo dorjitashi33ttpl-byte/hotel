@@ -6,6 +6,7 @@ import { AuditLog } from '../components/tenant/AuditLog';
 import { MenuUpload } from '../components/tenant/MenuUpload';
 import { HoldActivityFeed } from '../components/tenant/HoldActivityFeed';
 import { WalkInBookingForm } from '../components/tenant/WalkInBookingForm';
+import { PayoutManagement } from '../components/tenant/PayoutManagement';
 
 export const TenantDashboard: React.FC = () => {
   return (
@@ -25,6 +26,7 @@ export const TenantDashboard: React.FC = () => {
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
           <div className="lg:col-span-2 space-y-8">
             <WalkInBookingForm />
+            <PayoutManagement />
             <InventoryConfig roomTypes={[]} />
             <PricingInsights />
             <StaffScheduling />

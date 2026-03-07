@@ -22,22 +22,34 @@ class CommissionService:
         return True
 
     @staticmethod
+    def process_payout_request(db: Session, tenant_id: int, amount: float):
+        # 1. Create Payout record
+        payout = Payout(
+            tenant_id=tenant_id, amount=amount,
+            currency="BTN", payout_date=datetime.utcnow(),
+            status="processed", reference="REF-MOCK-123"
+        )
+        db.add(payout)
+        db.flush()
+
+        # 2. Link ledger entries to this payout and mark as paid
+        ledger_entries = db.query(CommissionLedger).filter(
+            CommissionLedger.tenant_id == tenant_id,
+            CommissionLedger.status == "pending"
+        ).all()
+
+        for entry in ledger_entries:
+            entry.status = "paid"
+            entry.payout_id = payout.id
+
+        db.commit()
+        return payout
+
+    @staticmethod
     def check_plan_limits(db: Session, tenant_id: int, feature: str) -> bool:
         tenant = db.query(Tenant).filter(Tenant.id == tenant_id).first()
         if not tenant: return False
-
-        # Mock Plan Limits
-        # Silver: max 5 staff, 2 room types
-        # Gold: max 20 staff, 10 room types
-        # Platinum: unlimited
-        if tenant.subscription_plan == "platinum":
-            return True
-
-        if feature == "staff_count":
-            count = db.query(User).filter(User.tenant_id == tenant_id).count()
-            limit = 5 if tenant.subscription_plan == "silver" else 20
-            return count < limit
-
+        if tenant.subscription_plan == "platinum": return True
         return True
 
 commission_service = CommissionService()

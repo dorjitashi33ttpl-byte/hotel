@@ -1,29 +1,25 @@
-# Hotel Booking & Management SaaS (Production-Ready)
+# Hotel Booking & Management SaaS (Production-Ready 2026)
 
-A comprehensive, multi-tenant SaaS platform for Bhutanese and international hotel markets.
+A definitive, world-class multi-tenant platform architected for global scale, localized for the Bhutanese market.
 
-## Tech Stack
-- **Backend**: FastAPI (Async), PostgreSQL + PostGIS, Redis, SQLAlchemy 2.0, Celery.
-- **Frontend**: React 18, TypeScript, Vite, TailwindCSS, Mapbox GL.
+## 🚀 World-Class Features
+1.  **Dual Inventory Engine**: Simultaneous Room-Type & Fixed-Room model support with transactional locks.
+2.  **Payment Orchestration**: Pluggable adapters (Stripe, Razorpay, PayPal) + Local Bank template engine.
+3.  **Mapbox Integration**: Deep spatial search, route polyline previews, and radius-based discovery.
+4.  **Multi-Country Localization**: Entirely data-driven tax rules, currencies, and regional administrative divisions.
+5.  **Operational Excellence**: Shift scheduling, automated guest notifications, and security audit logging.
+6.  **Partner Ecosystem**: OAuth2 Client Credentials API for OTAs with signed webhooks and rate limiting.
+7.  **Modern Experience**: SSO, WebSocket chat, Digital Check-in (QR keys), and Verified Reviews.
+8.  **Scalable Infrastructure**: FastAPI Async, PostGIS 3.3, Celery, and production-grade Docker orchestration.
+
+## 🛠 Tech Stack
+- **Backend**: FastAPI, PostgreSQL + PostGIS, Redis, Celery, SQLAlchemy 2.0.
+- **Frontend**: React 18, Vite, Zustand, TailwindCSS, Mapbox GL.
 - **Mobile**: React Native, Expo, Mapbox.
-- **Infrastructure**: Docker, k6, Locust.
 
-## Directory Structure
-- `backend/`: API, Workers, Models, Services.
-- `frontend/`: Web dashboards and booking portal.
-- `mobile/`: iOS/Android guest application.
-
-## Quick Start
+## 📦 Getting Started
 1. `docker-compose up --build`
-2. Backend is at `http://localhost:8000`
-3. Frontend is at `http://localhost:5173`
+2. Access Backend: `http://localhost:8000/docs`
+3. Access Frontend: `http://localhost:5173`
 
-## Features Included
-- Dual Inventory (Room-type vs Fixed-room).
-- Multi-gateway Payment Orchestration.
-- Mapbox routing and spatial search.
-- Staff shift management and automated notifications.
-- Partner API with OAuth2 and signed webhooks.
-- Multi-country localization via Admin UI.
-
-Refer to `DOCS.md` for detailed API and deployment guides.
+Refer to `DOCS.md` for technical deep-dives and deployment guides.

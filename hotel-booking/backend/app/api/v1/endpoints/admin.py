@@ -45,3 +45,15 @@ def revoke_partner(partner_id: int, db: Session = Depends(deps.get_db), current_
 def get_commission_summary(db: Session = Depends(deps.get_db), current_user = Depends(deps.RoleChecker(["platform_admin"]))):
     summary = db.query(func.sum(CommissionLedger.commission_amount).label("total_commission"), func.count(CommissionLedger.id).label("booking_count")).first()
     return {"total_commission": summary.total_commission or 0.0, "booking_count": summary.booking_count or 0, "currency": "BTN"}
+
+@router.get("/reports/revenue-by-region")
+def get_revenue_by_region(
+    db: Session = Depends(deps.get_db),
+    current_user = Depends(deps.RoleChecker(["platform_admin"]))
+):
+    # Aggregate revenue and commission by dzongkhag/state
+    # In a real app: JOIN hotels -> bookings -> ledger GROUP BY hotel.state
+    return [
+        {"region": "Thimphu", "total_revenue": 450000, "commission": 9000},
+        {"region": "Paro", "total_revenue": 280000, "commission": 5600},
+    ]

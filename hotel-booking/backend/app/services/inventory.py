@@ -1,30 +1,33 @@
 from datetime import date
 from typing import List, Optional
 from sqlalchemy.ext.asyncio import AsyncSession
-from sqlalchemy import select, and_, func
-from app.models.hotel import Room, RoomType, Booking
+from sqlalchemy import select, and_, func, or_, distinct
+from app.models.hotel import Room, RoomType, Booking, RoomMaintenance
 from app.models.marketing import AvailabilityWatchlist
 from app.services.notifications import NotificationService
 
 class InventoryService:
-    @staticmethod
-    async def get_available_room_types(db: AsyncSession, hotel_id: str, check_in: date, check_out: date):
-        # Implementation logic for availability
-        pass
-
     @staticmethod
     async def check_availability(db: AsyncSession, room_type_id: str, check_in: date, check_out: date) -> bool:
         room_type = await db.get(RoomType, room_type_id)
         if not room_type:
             return False
 
-        # Count rooms in maintenance for this room type
-        maintenance_count = await db.scalar(
-            select(func.count(Room.id)).where(
-                Room.room_type_id == room_type_id,
-                Room.is_maintenance == True
+        # Count rooms blocked by maintenance during any part of the requested window
+        maintenance_stmt = select(func.count(distinct(Room.id))).where(
+            Room.room_type_id == room_type_id
+        ).where(
+            or_(
+                Room.is_maintenance == True,
+                select(func.count(RoomMaintenance.id)).where(
+                    RoomMaintenance.room_id == Room.id,
+                    RoomMaintenance.start_date < check_out,
+                    RoomMaintenance.end_date > check_in
+                ).scalar_subquery() > 0
             )
         )
+        maintenance_count = await db.scalar(maintenance_stmt)
+
         effective_total = room_type.total_quantity - (maintenance_count or 0)
 
         booked_count = await db.scalar(

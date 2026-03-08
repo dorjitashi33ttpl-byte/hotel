@@ -67,3 +67,21 @@ class RatePlan(Base):
     hotel_id = Column(String, ForeignKey("hotels.id"))
     name = Column(String)
     discount_pct = Column(Float)
+
+class RoomMaintenance(Base):
+    __tablename__ = "room_maintenance"
+    id = Column(String, primary_key=True)
+    room_id = Column(String, ForeignKey("rooms.id"))
+    start_date = Column(Date, nullable=False)
+    end_date = Column(Date, nullable=False)
+    reason = Column(String)
+
+class ShiftAssignment(Base):
+    __tablename__ = "shift_assignments"
+    id = Column(String, primary_key=True)
+    hotel_id = Column(String, ForeignKey("hotels.id"))
+    user_id = Column(String, ForeignKey("users.id"))
+    start_time = Column(DateTime, nullable=False)
+    end_time = Column(DateTime, nullable=False)
+    handover_notes = Column(String)
+    created_at = Column(DateTime, default=func.now())

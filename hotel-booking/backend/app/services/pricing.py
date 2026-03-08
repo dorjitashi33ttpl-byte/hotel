@@ -1,48 +1,68 @@
-from datetime import date
-from sqlalchemy.orm import Session
-from sqlalchemy import and_
-from app.models.hotel import RoomType, SeasonalRate
-from app.models.booking import Booking, BookingStatus
+from datetime import date, timedelta
+from typing import List, Optional
+from sqlalchemy.ext.asyncio import AsyncSession
+from sqlalchemy import select, func
+from app.models.hotel import RatePlan, SeasonalRate, RoomType, Booking
+from decimal import Decimal
 
-class PricingEngine:
+class PricingService:
     @staticmethod
-    def calculate_price(db: Session, room_type_id: int, rate_plan_id: int, target_date: date, nights: int = 1) -> float:
-        room_type = db.query(RoomType).filter(RoomType.id == room_type_id).first()
-        base_price = room_type.base_price
+    async def get_base_rate(db: AsyncSession, room_type_id: str, check_in: date) -> Decimal:
+        # Get standard rate from RoomType
+        room_type = await db.get(RoomType, room_type_id)
+        if not room_type:
+            return Decimal("0.00")
 
-        # 1. Seasonal Rate lookup
-        seasonal = db.query(SeasonalRate).filter(
-            SeasonalRate.rate_plan_id == rate_plan_id,
-            and_(SeasonalRate.start_date <= target_date, SeasonalRate.end_date >= target_date)
-        ).first()
+        # Check for seasonal overrides
+        stmt = select(SeasonalRate).where(
+            SeasonalRate.room_type_id == room_type_id,
+            SeasonalRate.start_date <= check_in,
+            SeasonalRate.end_date >= check_in
+        )
+        result = await db.execute(stmt)
+        seasonal = result.scalars().first()
 
-        final_price = base_price
-        if seasonal:
-            if seasonal.fixed_price:
-                final_price = seasonal.fixed_price
-            else:
-                final_price = base_price * seasonal.multiplier
+        return seasonal.rate if seasonal else room_type.base_price
 
-        # 2. LOS (Length of Stay) Discount logic
-        if nights >= 7:
-            final_price *= 0.9 # 10% off for a week or more
-        elif nights >= 3:
-            final_price *= 0.95 # 5% off
-
-        return final_price
-
-class PricingInsightsService:
     @staticmethod
-    def get_occupancy_trends(db: Session, hotel_id: int) -> dict:
-        count = db.query(Booking).filter(
-            Booking.hotel_id == hotel_id,
-            Booking.status == BookingStatus.CONFIRMED
-        ).count()
-        return {
-            "avg_occupancy": 75.5,
-            "revenue_growth": 12.0,
-            "total_bookings": count
-        }
+    async def apply_yield_management(db: AsyncSession, room_type_id: str, check_in: date, base_rate: Decimal) -> Decimal:
+        """
+        Adjust price based on occupancy (Yield Management).
+        If occupancy > 80%, increase price by 20%.
+        If occupancy > 90%, increase price by 50%.
+        If occupancy < 20% and date is within 3 days, decrease by 15%.
+        """
+        # Calculate occupancy for the room type on that specific day
+        total_rooms_stmt = select(RoomType.total_quantity).where(RoomType.id == room_type_id)
+        total_rooms = (await db.execute(total_rooms_stmt)).scalar() or 1
 
-pricing_engine = PricingEngine()
-pricing_service = PricingInsightsService()
+        booked_stmt = select(func.count(Booking.id)).where(
+            Booking.room_type_id == room_type_id,
+            Booking.status.in_(["CONFIRMED", "CHECKED_IN"]),
+            Booking.check_in <= check_in,
+            Booking.check_out > check_in
+        )
+        booked_count = (await db.execute(booked_stmt)).scalar() or 0
+
+        occupancy = (booked_count / total_rooms) * 100
+
+        adjusted_rate = base_rate
+        if occupancy > 90:
+            adjusted_rate *= Decimal("1.50")
+        elif occupancy > 80:
+            adjusted_rate *= Decimal("1.20")
+        elif occupancy < 20 and (check_in - date.today()).days <= 3:
+            adjusted_rate *= Decimal("0.85")
+
+        return adjusted_rate.quantize(Decimal("0.01"))
+
+    @staticmethod
+    async def calculate_total(db: AsyncSession, room_type_id: str, check_in: date, check_out: date) -> Decimal:
+        total = Decimal("0.00")
+        current_date = check_in
+        while current_date < check_out:
+            base = await PricingService.get_base_rate(db, room_type_id, current_date)
+            final_rate = await PricingService.apply_yield_management(db, room_type_id, current_date, base)
+            total += final_rate
+            current_date += timedelta(days=1)
+        return total

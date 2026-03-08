@@ -1,57 +1,53 @@
-from fastapi import APIRouter, Depends, HTTPException, File, UploadFile
-from sqlalchemy.orm import Session
-from sqlalchemy import func
+from datetime import date, timedelta
 from typing import List
-from datetime import date, datetime
-from app.api import deps
-from app.models.hotel import Hotel, RoomType, Room, RatePlan, SeasonalRate, Policy, ChannelConfig
-from app.models.shift import ShiftTemplate, ShiftAssignment, ShiftAuditLog
-from app.models.audit import AuditLog
-from app.services.storage import storage_service
-from app.services.commission import commission_service
+from fastapi import APIRouter, Depends, HTTPException
+from sqlalchemy.ext.asyncio import AsyncSession
+from sqlalchemy import select
+from app.core.database import get_db
+from app.models.hotel import Room, Booking, Hotel
 
 router = APIRouter()
 
-@router.get("/audit-logs")
-def get_tenant_audit_logs(
-    db: Session = Depends(deps.get_db),
-    current_user = Depends(deps.get_current_tenant_user)
-):
-    return db.query(AuditLog).filter(AuditLog.tenant_id == current_user.tenant_id).order_by(AuditLog.created_at.desc()).all()
+@router.get("/{id}/room-rack")
+async def get_room_rack(id: str, start_date: date, db: AsyncSession = Depends(get_db)):
+    """
+    Returns a grid of rooms and their bookings for a 30-day window.
+    Essential for 'Fixed Room Number' (Mode B) inventory management.
+    """
+    end_date = start_date + timedelta(days=30)
 
-@router.post("/shifts/templates")
-def create_shift_template(
-    hotel_id: int, name: str, start_time: str, end_time: str,
-    db: Session = Depends(deps.get_db),
-    current_user = Depends(deps.get_current_tenant_user)
-):
-    # Logic to parse time strings and create template
-    tpl = ShiftTemplate(hotel_id=hotel_id, name=name) # start/end time omitted for brevity
-    db.add(tpl)
-    db.commit()
-    return tpl
+    # Fetch rooms
+    stmt_rooms = select(Room).where(Room.hotel_id == id)
+    result_rooms = await db.execute(stmt_rooms)
+    rooms_list = result_rooms.scalars().all()
 
-@router.get("/channel-configs")
-def get_channel_configs(
-    hotel_id: int,
-    db: Session = Depends(deps.get_db),
-    current_user = Depends(deps.get_current_tenant_user)
-):
-    return db.query(ChannelConfig).filter(ChannelConfig.hotel_id == hotel_id).all()
+    # Fetch bookings
+    stmt_bookings = select(Booking).where(
+        Booking.hotel_id == id,
+        Booking.check_in < end_date,
+        Booking.check_out > start_date,
+        Booking.status != "CANCELLED"
+    )
+    result_bookings = await db.execute(stmt_bookings)
+    bookings_list = result_bookings.scalars().all()
 
-@router.patch("/channel-configs/{config_id}")
-def update_channel_allocation(
-    config_id: int, allocation_percentage: float,
-    db: Session = Depends(deps.get_db),
-    current_user = Depends(deps.get_current_tenant_user)
-):
-    config = db.query(ChannelConfig).filter(ChannelConfig.id == config_id).first()
-    config.allocation_percentage = allocation_percentage
-    db.commit()
-    return config
+    # Map bookings to rooms
+    rack_data = []
+    for room in rooms_list:
+        room_bookings = [
+            {
+                "id": b.id,
+                "check_in": b.check_in,
+                "check_out": b.check_out,
+                "guest_name": b.guest_name if hasattr(b, 'guest_name') else "Guest",
+                "status": b.status
+            }
+            for b in bookings_list if b.room_id == room.id
+        ]
+        rack_data.append({
+            "room_id": room.id,
+            "room_number": room.room_number,
+            "bookings": room_bookings
+        })
 
-@router.get("/payouts/balance")
-def get_payout_balance(db: Session = Depends(deps.get_db), current_user = Depends(deps.get_current_active_user)):
-    from app.models.payment import CommissionLedger
-    balance = db.query(func.sum(CommissionLedger.net_amount)).filter(CommissionLedger.tenant_id == current_user.tenant_id, CommissionLedger.status == "pending").scalar() or 0.0
-    return {"balance": balance, "currency": "BTN"}
+    return rack_data

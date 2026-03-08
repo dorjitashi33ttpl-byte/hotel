@@ -9,3 +9,4 @@ from .audit import AuditLog
 from .review import Review
 from .chat import ChatMessage
 from .partner import PartnerApp, WebhookLog
+from .marketing import AvailabilityWatchlist

@@ -1,55 +1,60 @@
-from datetime import datetime
-from sqlalchemy.orm import Session
-from sqlalchemy import and_, select, func
-from app.models.hotel import Hotel, Room, RoomType, InventoryMode, ChannelConfig
-from app.models.booking import Booking, BookingStatus
+from datetime import date
+from typing import List, Optional
+from sqlalchemy.ext.asyncio import AsyncSession
+from sqlalchemy import select, and_, func
+from app.models.hotel import Room, RoomType, Booking
+from app.models.marketing import AvailabilityWatchlist
+from app.services.notifications import NotificationService
 
 class InventoryService:
     @staticmethod
-    async def check_and_reserve(
-        db: Session,
-        hotel_id: int,
-        room_type_id: int,
-        check_in: datetime,
-        check_out: datetime,
-        booking_id: int,
-        channel: str = "direct"
-    ) -> bool:
-        # 1. Transactional isolation
-        hotel = db.execute(select(Hotel).where(Hotel.id == hotel_id).with_for_update()).scalar_one_or_none()
-        if not hotel: return False
+    async def get_available_room_types(db: AsyncSession, hotel_id: str, check_in: date, check_out: date):
+        # Implementation logic for availability
+        pass
 
-        # 2. Hardened Channel Quota Enforcement
-        if channel != "direct":
-            config = db.query(ChannelConfig).filter(ChannelConfig.hotel_id == hotel_id, ChannelConfig.channel_name == channel).first()
-            if not config or not config.is_active: return False
+    @staticmethod
+    async def check_availability(db: AsyncSession, room_type_id: str, check_in: date, check_out: date) -> bool:
+        room_type = await db.get(RoomType, room_type_id)
+        if not room_type:
+            return False
 
-            # Quota = (Total Capacity for this Room Type * Allocation %)
-            room_type = db.query(RoomType).filter(RoomType.id == room_type_id).first()
-            total_rooms = room_type.total_quantity
-            quota = total_rooms * (config.allocation_percentage / 100.0)
-
-            # Count current channel bookings
-            channel_bookings = db.query(Booking).filter(
+        booked_count = await db.scalar(
+            select(func.count(Booking.id)).where(
                 Booking.room_type_id == room_type_id,
-                Booking.status.in_([BookingStatus.CONFIRMED, BookingStatus.HOLD]),
-                and_(Booking.check_in < check_out, Booking.check_out > check_in)
-                # In production, we'd add: Booking.channel == channel
-            ).count()
+                Booking.status.in_(["CONFIRMED", "CHECKED_IN"]),
+                Booking.check_in < check_out,
+                Booking.check_out > check_in
+            )
+        )
+        return booked_count < room_type.total_quantity
 
-            if channel_bookings >= quota: return False
+    @staticmethod
+    async def process_cancellation(db: AsyncSession, booking_id: str):
+        booking = await db.get(Booking, booking_id)
+        if not booking:
+            return
 
-        # 3. Final Availability check
-        if hotel.inventory_mode == InventoryMode.ROOM_TYPE:
-            count = db.query(Booking).filter(
-                Booking.room_type_id == room_type_id,
-                Booking.status.in_([BookingStatus.CONFIRMED, BookingStatus.HOLD]),
-                and_(Booking.check_in < check_out, Booking.check_out > check_in)
-            ).count()
-            return count < room_type.total_quantity
-        else:
-            # Mode B: Fixed Room Assignment logic...
-            return True # Simplified for this step
-        return False
+        booking.status = "CANCELLED"
+        await db.commit()
 
-inventory_service = InventoryService()
+        # Notify watchlist users
+        stmt = select(AvailabilityWatchlist).where(
+            AvailabilityWatchlist.hotel_id == booking.hotel_id,
+            AvailabilityWatchlist.room_type_id == booking.room_type_id,
+            AvailabilityWatchlist.start_date <= booking.check_in,
+            AvailabilityWatchlist.end_date >= booking.check_out,
+            AvailabilityWatchlist.is_active == True,
+            AvailabilityWatchlist.notified == False
+        )
+        result = await db.execute(stmt)
+        watchers = result.scalars().all()
+
+        for watcher in watchers:
+            await NotificationService.send_email(
+                watcher.user_id,
+                "Room Available!",
+                f"The room you were watching at {booking.hotel_id} is now available."
+            )
+            watcher.notified = True
+
+        await db.commit()

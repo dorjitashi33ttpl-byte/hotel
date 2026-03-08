@@ -12,3 +12,10 @@ class AvailabilityWatchlist(Base):
     end_date = Column(Date, nullable=False)
     is_active = Column(Boolean, default=True)
     notified = Column(Boolean, default=False)
+
+class SavedHotel(Base):
+    __tablename__ = "saved_hotels"
+
+    id = Column(String, primary_key=True)
+    user_id = Column(String, ForeignKey("users.id"))
+    hotel_id = Column(String, ForeignKey("hotels.id"))

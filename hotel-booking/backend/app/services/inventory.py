@@ -18,6 +18,15 @@ class InventoryService:
         if not room_type:
             return False
 
+        # Count rooms in maintenance for this room type
+        maintenance_count = await db.scalar(
+            select(func.count(Room.id)).where(
+                Room.room_type_id == room_type_id,
+                Room.is_maintenance == True
+            )
+        )
+        effective_total = room_type.total_quantity - (maintenance_count or 0)
+
         booked_count = await db.scalar(
             select(func.count(Booking.id)).where(
                 Booking.room_type_id == room_type_id,
@@ -26,7 +35,7 @@ class InventoryService:
                 Booking.check_out > check_in
             )
         )
-        return booked_count < room_type.total_quantity
+        return booked_count < effective_total
 
     @staticmethod
     async def process_cancellation(db: AsyncSession, booking_id: str):

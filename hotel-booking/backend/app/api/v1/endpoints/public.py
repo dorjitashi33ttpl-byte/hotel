@@ -1,80 +1,31 @@
-from fastapi import APIRouter, Depends, HTTPException, Query, Request
-from sqlalchemy.orm import Session, selectinload
-from sqlalchemy import func
 from typing import List, Optional
-from datetime import datetime, timedelta
-from app.api import deps
-from app.services.inventory import inventory_service
-from app.services.geo import geo_service
-from app.services.tax import tax_service
-from app.services.commission import commission_service
-from app.services.fraud import fraud_check_service
-from app.services.recommendations import recommendation_service
+from fastapi import APIRouter, Depends, HTTPException
+from sqlalchemy.ext.asyncio import AsyncSession
+from sqlalchemy import select
+from app.core.database import get_db
 from app.models.hotel import Hotel, RoomType
-from app.models.booking import Booking, BookingStatus
+from app.models.marketing import SavedHotel
+import uuid
 
 router = APIRouter()
 
-@router.get("/recommendations")
-async def get_smart_recommendations(
-    lat: float,
-    lng: float,
-    db: Session = Depends(deps.get_db)
-):
-    # 1. Automatically detect context from coordinates using Mapbox Reverse Geocoding
-    geo_context = await geo_service.reverse_geocode(lat, lng)
+@router.get("/hotels")
+async def search_hotels(db: AsyncSession = Depends(get_db)):
+    return await db.scalars(select(Hotel))
 
-    country_iso = geo_context.get("country_iso")
-    city = geo_context.get("city")
+@router.post("/hotels/{id}/save")
+async def save_hotel(id: str, user_id: str, db: AsyncSession = Depends(get_db)):
+    existing = await db.scalar(select(SavedHotel).where(SavedHotel.user_id == user_id, SavedHotel.hotel_id == id))
+    if existing:
+        return {"message": "Already saved"}
 
-    if not country_iso or not city:
-        # Fallback or error if location cannot be determined
-        return []
+    saved = SavedHotel(id=str(uuid.uuid4()), user_id=user_id, hotel_id=id)
+    db.add(saved)
+    await db.commit()
+    return {"message": "Hotel saved"}
 
-    # 2. Return hotels ONLY in that specific city and country
-    return recommendation_service.get_recommendations(db, lat, lng, country_iso, city)
-
-@router.get("/hotels/search")
-async def search_hotels(
-    db: Session = Depends(deps.get_db),
-    pagination: deps.PaginationParams = Depends(deps.get_pagination_params),
-    lat: float = Query(...),
-    lng: float = Query(...),
-    radius_km: float = Query(10),
-):
-    # MANUAL SEARCH: Displays all hotels within the radius, regardless of user context
-    point = func.ST_SetSRID(func.ST_MakePoint(lng, lat), 4326)
-    hotels = db.query(
-        Hotel,
-        func.ST_Distance(func.cast(Hotel.location, func.Geography), func.cast(point, func.Geography)).label("dist")
-    ).filter(
-        func.ST_DWithin(func.cast(Hotel.location, func.Geography), func.cast(point, func.Geography), radius_km * 1000)
-    ).order_by("dist").offset(pagination.skip).limit(pagination.limit).all()
-
-    return [{"id": h.id, "name": h.name, "dist_km": round(d/1000, 2), "city": h.city} for h, d in hotels]
-
-@router.post("/bookings/hold")
-async def hold_booking(
-    request: Request, hotel_id: int, room_type_id: int, check_in: datetime, check_out: datetime,
-    db: Session = Depends(deps.get_db), current_user = Depends(deps.get_current_active_user)
-):
-    if not fraud_check_service.check_booking(current_user.id, request.client.host, "online"):
-        raise HTTPException(status_code=403, detail="Suspicious activity.")
-    is_available = await inventory_service.check_and_reserve(db, hotel_id, room_type_id, check_in, check_out, 0)
-    if not is_available:
-        raise HTTPException(status_code=400, detail="Room not available.")
-
-    room_type = db.query(RoomType).filter(RoomType.id == room_type_id).first()
-    tax_info = tax_service.calculate_total_with_tax(room_type.base_price, "BT")
-
-    booking = Booking(
-        tenant_id=1, hotel_id=hotel_id, user_id=current_user.id, room_type_id=room_type_id,
-        check_in=check_in, check_out=check_out, status=BookingStatus.HOLD,
-        total_amount=tax_info["total_with_tax"],
-        commission_amount=commission_service.calculate_commission(tax_info["total_with_tax"]),
-        currency="BTN", hold_expires_at=datetime.utcnow() + timedelta(minutes=15)
-    )
-    db.add(booking)
-    db.commit()
-    db.refresh(booking)
-    return booking
+@router.get("/users/me/saved-hotels")
+async def get_saved_hotels(user_id: str, db: AsyncSession = Depends(get_db)):
+    stmt = select(Hotel).join(SavedHotel, SavedHotel.hotel_id == Hotel.id).where(SavedHotel.user_id == user_id)
+    result = await db.execute(stmt)
+    return result.scalars().all()

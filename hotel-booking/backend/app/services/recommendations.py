@@ -1,43 +1,28 @@
-from typing import List, Dict, Any, Optional
 from sqlalchemy.orm import Session
-from sqlalchemy import text
+from sqlalchemy import func
 from app.models.hotel import Hotel
+from app.models.booking import Booking
+from typing import List
 
 class RecommendationService:
     @staticmethod
-    def get_recommendations(
-        db: Session,
-        lat: float,
-        lng: float,
-        country_iso: str,
-        city: Optional[str] = None,
-        limit: int = 5
-    ) -> List[Dict[str, Any]]:
-        # STRICT FILTERING: Only hotels in the same country AND city (context-aware)
-        # Order by proximity within that set
-        query = text("""
-            SELECT h.id, h.name, h.description, h.address, h.reputation_score, h.city,
-                   ST_Distance(h.location, ST_SetSRID(ST_MakePoint(:lng, :lat), 4326)::geography) as distance_meters
-            FROM hotels h
-            JOIN tenants t ON h.tenant_id = t.id
-            JOIN countries c ON t.country_id = c.id
-            WHERE c.iso_code = :country_iso
-              AND h.city = :city
-              AND h.is_active = True
-            ORDER BY distance_meters ASC
-            LIMIT :limit
-        """)
-        # results = db.execute(query, {"lat": lat, "lng": lng, "country_iso": country_iso, "city": city, "limit": limit}).all()
+    async def get_personalized_recommendations(db: Session, user_id: int, lat: float = None, lng: float = None) -> List[Hotel]:
+        # 1. Look for user's past booking patterns (e.g., preferred regions)
+        past_bookings = db.query(Hotel.region_id).join(Booking).filter(Booking.user_id == user_id).all()
+        preferred_regions = [r.region_id for r in past_bookings]
 
-        # Mock data for demonstration of the filter
-        return [
-            {
-                "id": 1,
-                "name": f"Heritage Stay in {city}",
-                "city": city,
-                "country": country_iso,
-                "reason": "Top rated in your area"
-            }
-        ]
+        query = db.query(Hotel).filter(Hotel.is_active == True)
+
+        if lat and lng:
+            # 2. Prioritize nearby hotels using PostGIS
+            point = f"POINT({lng} {lat})"
+            query = query.order_by(func.ST_Distance(Hotel.location, func.ST_GeomFromText(point, 4326)))
+
+        # 3. Boost hotels in preferred regions
+        if preferred_regions:
+            query = query.order_by(Hotel.region_id.in_(preferred_regions).desc())
+
+        # 4. Limit to top 5 recommendations
+        return query.limit(5).all()
 
 recommendation_service = RecommendationService()

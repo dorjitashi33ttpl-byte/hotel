@@ -3,37 +3,60 @@ version: '3.8'
 services:
   db:
     image: postgis/postgis:15-3.3
-    restart: always
     environment:
-      POSTGRES_USER: ${POSTGRES_USER}
-      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
-      POSTGRES_DB: hotel_booking
+      POSTGRES_DB: hotel_saas
+      POSTGRES_USER: admin
+      POSTGRES_PASSWORD: ${DB_PASSWORD}
     volumes:
-      - postgres_prod_data:/var/lib/postgresql/data
+      - postgres_data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U admin -d hotel_saas"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
 
   redis:
     image: redis:7-alpine
-    restart: always
+    command: redis-server --requirepass ${REDIS_PASSWORD}
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 10s
 
   backend:
     build: ./backend
-    restart: always
     environment:
-      POSTGRES_SERVER: db
-      REDIS_HOST: redis
-      SQLALCHEMY_DATABASE_URI: postgresql+asyncpg://${POSTGRES_USER}:${POSTGRES_PASSWORD}@db:5432/hotel_booking
-    ports:
-      - "80:8000"
+      DATABASE_URL: postgresql+asyncpg://admin:${DB_PASSWORD}@db/hotel_saas
+      REDIS_URL: redis://:${REDIS_PASSWORD}@redis:6379/0
     depends_on:
-      - db
-      - redis
+      db:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+    restart: always
+    logging:
+      driver: "json-file"
+      options:
+        max-size: "100mb"
+        max-file: "3"
 
   worker:
     build: ./backend
-    command: celery -A app.worker.tasks worker --loglevel=info
+    command: celery -A app.worker.celery_app worker --loglevel=info
+    environment:
+      DATABASE_URL: postgresql+asyncpg://admin:${DB_PASSWORD}@db/hotel_saas
+      REDIS_URL: redis://:${REDIS_PASSWORD}@redis:6379/0
     depends_on:
-      - redis
       - db
+      - redis
+
+  frontend:
+    build:
+      context: ./frontend
+      args:
+        VITE_API_URL: https://api.hotel.bt
+    ports:
+      - "80:80"
+    restart: always
 
 volumes:
-  postgres_prod_data:
+  postgres_data:

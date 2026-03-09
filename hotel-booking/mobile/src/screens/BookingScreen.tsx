@@ -1,55 +1,98 @@
 import React, { useState } from 'react';
-import { View, Text, TouchableOpacity, StyleSheet, ScrollView } from 'react-native';
+import { View, Text, StyleSheet, ScrollView, TouchableOpacity, TextInput, KeyboardAvoidingView, Platform, ActivityIndicator } from 'react-native';
+import { SafeAreaView } from 'react-native-safe-area-context';
+import { Colors } from '../theme/colors';
 
-export const BookingScreen = ({ navigation }) => {
-  const [method, setMethod] = useState('stripe');
+export const BookingScreen = ({ navigation }: any) => {
+  const [loading, setLoading] = useState(false);
+
+  const handleConfirm = () => {
+    setLoading(true);
+    setTimeout(() => {
+      setLoading(false);
+      navigation.navigate('BookingDetail');
+    }, 1500);
+  };
 
   return (
-    <ScrollView style={styles.container}>
-      <Text style={styles.title}>Secure Payment</Text>
-      <View style={styles.summaryCard}>
-        <Text style={styles.hotelName}>Thimphu Heritage Lodge</Text>
-        <Text style={styles.details}>Deluxe Heritage Room • Jun 10-12</Text>
-        <View style={styles.divider} />
-        <View style={styles.row}>
-          <Text style={styles.totalLabel}>Total</Text>
-          <Text style={styles.totalValue}>BTN 11,000</Text>
+    <SafeAreaView style={styles.container} edges={['bottom']}>
+      <KeyboardAvoidingView
+        behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
+        style={{ flex: 1 }}
+      >
+        <ScrollView contentContainerStyle={styles.content}>
+          <View style={styles.header}>
+            <Text style={styles.kicker}>Reservation</Text>
+            <Text style={styles.title}>Secure Your Stay</Text>
+          </View>
+
+          <View style={styles.form}>
+             <View style={styles.inputGroup}>
+                <Text style={styles.label}>Full Name</Text>
+                <TextInput style={styles.input} placeholder="Tashi Dorji" placeholderTextColor={Colors.stone300} />
+             </View>
+             <View style={styles.inputGroup}>
+                <Text style={styles.label}>Email Address</Text>
+                <TextInput style={styles.input} placeholder="tashi.dorji@druk.bt" keyboardType="email-address" autoCapitalize="none" />
+             </View>
+             <View style={styles.inputGroup}>
+                <Text style={styles.label}>Special Requests</Text>
+                <TextInput
+                  style={[styles.input, { height: 100, paddingTop: 12 }]}
+                  placeholder="e.g. Late arrival, dietary preferences..."
+                  multiline
+                  textAlignVertical="top"
+                />
+             </View>
+          </View>
+
+          <View style={styles.summary}>
+             <View style={styles.row}>
+                <Text style={styles.summaryLabel}>Valley View Suite</Text>
+                <Text style={styles.summaryValue}>$1,400 x 4 nights</Text>
+             </View>
+             <View style={styles.row}>
+                <Text style={styles.summaryLabel}>Taxes & SDF</Text>
+                <Text style={styles.summaryValue}>$560</Text>
+             </View>
+             <View style={[styles.row, { marginTop: 12, borderTopWidth: 1, borderTopColor: Colors.stone100, paddingTop: 12 }]}>
+                <Text style={styles.totalLabel}>Total</Text>
+                <Text style={styles.totalValue}>$6,160</Text>
+             </View>
+          </View>
+        </ScrollView>
+
+        <View style={styles.footer}>
+           <TouchableOpacity
+             style={styles.button}
+             onPress={handleConfirm}
+             disabled={loading}
+           >
+              {loading ? <ActivityIndicator color="#fff" /> : <Text style={styles.buttonText}>Confirm & Pay</Text>}
+           </TouchableOpacity>
         </View>
-      </View>
-
-      <Text style={styles.sectionTitle}>Payment Method</Text>
-      {['Stripe', 'PayPal', 'Local Bank'].map(m => (
-        <TouchableOpacity
-          key={m}
-          style={[styles.methodCard, method === m.toLowerCase() && styles.selectedCard]}
-          onPress={() => setMethod(m.toLowerCase())}
-        >
-          <Text style={[styles.methodText, method === m.toLowerCase() && styles.selectedText]}>{m}</Text>
-        </TouchableOpacity>
-      ))}
-
-      <TouchableOpacity style={styles.confirmButton} onPress={() => navigation.navigate('Main')}>
-        <Text style={styles.confirmText}>Confirm & Pay</Text>
-      </TouchableOpacity>
-    </ScrollView>
+      </KeyboardAvoidingView>
+    </SafeAreaView>
   );
 };
 
 const styles = StyleSheet.create({
-  container: { flex: 1, backgroundColor: '#f9f9f9', padding: 25 },
-  title: { fontSize: 28, fontWeight: '900', marginBottom: 20 },
-  summaryCard: { backgroundColor: 'white', padding: 20, borderRadius: 20, marginBottom: 30, elevation: 2 },
-  hotelName: { fontSize: 18, fontWeight: 'bold' },
-  details: { color: '#666', marginTop: 5 },
-  divider: { height: 1, backgroundColor: '#eee', marginVertical: 15 },
-  row: { flexDirection: 'row', justifyContent: 'space-between' },
-  totalLabel: { fontSize: 16, color: '#999' },
-  totalValue: { fontSize: 20, fontWeight: 'bold', color: '#2563eb' },
-  sectionTitle: { fontSize: 16, fontWeight: 'bold', marginBottom: 15, color: '#444' },
-  methodCard: { backgroundColor: 'white', padding: 20, borderRadius: 15, marginBottom: 10, borderWidth: 1, borderColor: '#eee' },
-  selectedCard: { borderColor: '#2563eb', backgroundColor: '#eff6ff' },
-  methodText: { fontWeight: 'bold', color: '#666' },
-  selectedText: { color: '#2563eb' },
-  confirmButton: { backgroundColor: '#2563eb', padding: 20, borderRadius: 15, alignItems: 'center', marginTop: 20 },
-  confirmText: { color: 'white', fontWeight: 'bold', fontSize: 18 }
+  container: { flex: 1, backgroundColor: Colors.stone50 },
+  content: { padding: 32 },
+  header: { marginBottom: 40 },
+  kicker: { fontSize: 10, fontWeight: 'bold', color: Colors.gold, letterSpacing: 4, textTransform: 'uppercase', marginBottom: 8 },
+  title: { fontSize: 32, fontFamily: Platform.OS === 'ios' ? 'Optima' : 'serif', color: Colors.stone900 },
+  form: { gap: 24 },
+  inputGroup: { gap: 8 },
+  label: { fontSize: 10, fontWeight: 'bold', color: Colors.stone400, textTransform: 'uppercase', letterSpacing: 1 },
+  input: { borderBottomWidth: 1, borderBottomColor: Colors.stone200, paddingVertical: 12, fontSize: 16, color: Colors.stone900, fontFamily: Platform.OS === 'ios' ? 'Optima' : 'serif' },
+  summary: { marginTop: 48, backgroundColor: Colors.white, padding: 24, shadowColor: '#000', shadowOffset: { width: 0, height: 4 }, shadowOpacity: 0.05, shadowRadius: 10, elevation: 2 },
+  row: { flexDirection: 'row', justifyContent: 'space-between', marginBottom: 8 },
+  summaryLabel: { fontSize: 13, color: Colors.stone500 },
+  summaryValue: { fontSize: 13, color: Colors.stone900, fontWeight: '500' },
+  totalLabel: { fontSize: 16, fontWeight: 'bold', color: Colors.stone900 },
+  totalValue: { fontSize: 18, fontWeight: 'bold', color: Colors.gold },
+  footer: { padding: 32, backgroundColor: Colors.white, borderTopWidth: 1, borderTopColor: Colors.stone100 },
+  button: { backgroundColor: Colors.stone900, paddingVertical: 18, alignItems: 'center' },
+  buttonText: { color: Colors.white, fontSize: 12, fontWeight: 'bold', textTransform: 'uppercase', letterSpacing: 3 },
 });

@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { View, Text, StyleSheet, ScrollView, TouchableOpacity, Alert, ActivityIndicator } from 'react-native';
+import { View, Text, StyleSheet, ScrollView, TouchableOpacity, Alert, ActivityIndicator, Platform } from 'react-native';
 import { Colors } from '../theme/colors';
 
 export const BookingDetailScreen = ({ navigation }: any) => {
@@ -16,7 +16,6 @@ export const BookingDetailScreen = ({ navigation }: any) => {
           text: "Confirm Checkout",
           onPress: async () => {
              setLoading(true);
-             // Simulate API call to POST /api/v1/public/bookings/{id}/checkout
              await new Promise(r => setTimeout(r, 2000));
              setLoading(false);
              setCheckedOut(true);
@@ -54,10 +53,10 @@ export const BookingDetailScreen = ({ navigation }: any) => {
 
       <View style={styles.actions}>
          <Text style={styles.actionTitle}>Guest Services</Text>
-         <TouchableOpacity style={styles.actionBtn}>
+         <TouchableOpacity style={styles.actionBtn} activeOpacity={0.6}>
             <Text style={styles.actionText}>Request Housekeeping</Text>
          </TouchableOpacity>
-         <TouchableOpacity style={styles.actionBtn}>
+         <TouchableOpacity style={styles.actionBtn} activeOpacity={0.6}>
             <Text style={styles.actionText}>Chat with Concierge</Text>
          </TouchableOpacity>
 
@@ -68,8 +67,9 @@ export const BookingDetailScreen = ({ navigation }: any) => {
               style={styles.checkoutBtn}
               onPress={handleSelfCheckout}
               disabled={loading}
+              activeOpacity={0.8}
             >
-               {loading ? <ActivityIndicator color="#fff" /> : <Text style={styles.checkoutBtnText}>Self Checkout</Text>}
+               {loading ? <ActivityIndicator color={Colors.stone900} /> : <Text style={styles.checkoutBtnText}>Self Checkout</Text>}
             </TouchableOpacity>
          </View>
       </View>
@@ -80,24 +80,24 @@ export const BookingDetailScreen = ({ navigation }: any) => {
 const styles = StyleSheet.create({
   container: { flex: 1, backgroundColor: Colors.stone50 },
   content: { paddingBottom: 40 },
-  header: { padding: 32, paddingTop: 60, backgroundColor: Colors.white },
+  header: { padding: 32, paddingTop: 40, backgroundColor: Colors.white },
   kicker: { fontSize: 10, fontWeight: 'bold', color: Colors.gold, letterSpacing: 4, textTransform: 'uppercase', marginBottom: 8 },
-  title: { fontSize: 32, fontFamily: 'serif', color: Colors.stone900 },
+  title: { fontSize: 32, fontFamily: Platform.OS === 'ios' ? 'Optima' : 'serif', color: Colors.stone900 },
   dates: { fontSize: 14, color: Colors.stone400, marginTop: 8 },
   infoBox: { margin: 32, padding: 24, backgroundColor: Colors.white, borderLeftWidth: 4, borderLeftColor: Colors.gold },
   infoLabel: { fontSize: 10, fontWeight: 'bold', color: Colors.stone400, textTransform: 'uppercase', marginBottom: 4 },
-  infoValue: { fontSize: 16, fontFamily: 'serif', color: Colors.stone900 },
+  infoValue: { fontSize: 16, fontFamily: Platform.OS === 'ios' ? 'Optima' : 'serif', color: Colors.stone900 },
   actions: { paddingHorizontal: 32 },
   actionTitle: { fontSize: 10, fontWeight: 'bold', color: Colors.stone300, letterSpacing: 2, textTransform: 'uppercase', marginBottom: 20 },
   actionBtn: { paddingVertical: 20, borderBottomWidth: 1, borderBottomColor: Colors.stone100 },
-  actionText: { fontSize: 16, color: Colors.stone900 },
+  actionText: { fontSize: 16, color: Colors.stone900, fontFamily: Platform.OS === 'ios' ? 'Optima' : 'serif' },
   checkoutBox: { marginTop: 40, padding: 32, backgroundColor: Colors.stone900 },
-  checkoutTitle: { fontSize: 18, fontFamily: 'serif', color: Colors.white, marginBottom: 8 },
+  checkoutTitle: { fontSize: 18, fontFamily: Platform.OS === 'ios' ? 'Optima' : 'serif', color: Colors.white, marginBottom: 8 },
   checkoutDesc: { fontSize: 13, color: Colors.stone400, lineHeight: 20, marginBottom: 24 },
   checkoutBtn: { backgroundColor: Colors.white, paddingVertical: 16, alignItems: 'center' },
   checkoutBtnText: { fontSize: 11, fontWeight: 'bold', color: Colors.stone900, textTransform: 'uppercase', letterSpacing: 2 },
   doneContainer: { flex: 1, alignItems: 'center', justifyContent: 'center', padding: 40, backgroundColor: Colors.white },
-  doneTitle: { fontSize: 48, fontFamily: 'serif', color: Colors.stone900, marginBottom: 20 },
+  doneTitle: { fontSize: 48, fontFamily: Platform.OS === 'ios' ? 'Optima' : 'serif', color: Colors.stone900, marginBottom: 20 },
   doneText: { fontSize: 16, color: Colors.stone500, textAlign: 'center', lineHeight: 24, marginBottom: 40 },
   backBtn: { borderBottomWidth: 1, borderBottomColor: Colors.stone900 },
   backBtnText: { fontSize: 10, fontWeight: 'bold', textTransform: 'uppercase', letterSpacing: 2, paddingBottom: 4 },

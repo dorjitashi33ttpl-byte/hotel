@@ -6,6 +6,7 @@ import { AvailabilityBar } from './components/landing/AvailabilityBar';
 import { PropertyStory } from './components/landing/PropertyStory';
 import { ExclusiveOffers } from './components/landing/ExclusiveOffers';
 import { SuitesDining } from './components/landing/SuitesDining';
+import { Wellness } from './components/landing/Wellness';
 import { TenantDashboard } from './pages/TenantDashboard';
 import { BookingFlow } from './pages/BookingFlow';
 import { DigitalCheckIn } from './pages/DigitalCheckIn';
@@ -61,6 +62,7 @@ function App() {
                   <AvailabilityBar />
                   <PropertyStory />
                   <SuitesDining />
+                  <Wellness />
                   <ExclusiveOffers />
                 </>
               } />

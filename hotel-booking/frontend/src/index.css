@@ -1,22 +1,20 @@
-@import url('https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,400;0,700;1,400&family=Plus+Jakarta+Sans:wght@300;400;500;600&display=swap');
+@import url('https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,400;0,500;0,600;1,400&family=Plus+Jakarta+Sans:wght@200;300;400;500;600&display=swap');
 
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
 
 :root {
-  --color-stone-50: #FAF9F6;
-  --color-stone-100: #F3F2EE;
-  --color-stone-200: #E5E4DF;
-  --color-stone-300: #D1CFCA;
-  --color-stone-900: #1C1C1C;
-  --color-gold: #C5A059;
+  --color-stone-50: #FCFAF7;
+  --color-stone-100: #F7F5F0;
+  --color-stone-200: #EAE8E1;
+  --color-stone-900: #1A1A1A;
+  --color-gold: #B4975A;
 }
 
 @layer base {
   body {
-    @apply font-sans bg-[var(--color-stone-50)] text-[var(--color-stone-900)] selection:bg-[var(--color-gold)] selection:text-white;
-    -webkit-font-smoothing: antialiased;
+    @apply font-sans bg-[var(--color-stone-50)] text-[var(--color-stone-900)] selection:bg-[var(--color-gold)] selection:text-white antialiased;
   }
   h1, h2, h3, h4, .font-serif {
     @apply font-serif font-normal;
@@ -24,47 +22,49 @@
 }
 
 .luxury-nav {
-  @apply fixed top-0 z-[100] w-full px-12 py-8 flex justify-between items-center transition-all duration-700 ease-in-out;
+  @apply fixed top-0 z-[100] w-full px-12 py-10 flex justify-between items-center transition-all duration-1000 ease-out;
 }
 
 .luxury-nav.scrolled {
-  @apply py-4 bg-white/80 backdrop-blur-xl border-b border-stone-100;
+  @apply py-6 bg-[var(--color-stone-50)]/95 backdrop-blur-md border-b border-stone-100;
 }
 
-.luxury-nav.scrolled .nav-link {
+.luxury-nav.scrolled .nav-link, .luxury-nav.scrolled .nav-logo {
   @apply text-stone-900;
 }
 
 .nav-link {
-  @apply text-[10px] font-bold uppercase tracking-[0.3em] text-white hover:text-[var(--color-gold)] transition-colors duration-300;
+  @apply text-[9px] font-bold uppercase tracking-[0.4em] text-white hover:text-[var(--color-gold)] transition-colors duration-500;
 }
 
-.btn-primary-luxury {
-  @apply px-10 py-4 bg-[var(--color-stone-900)] text-white font-serif text-sm tracking-widest uppercase hover:bg-[var(--color-gold)] transition-all duration-500 ease-in-out;
+.nav-logo {
+  @apply text-white font-serif text-2xl tracking-tighter transition-colors duration-1000;
 }
 
-.btn-outline-luxury {
-  @apply px-10 py-4 border border-stone-200 text-stone-900 font-serif text-sm tracking-widest uppercase hover:border-stone-900 transition-all duration-500 ease-in-out;
+.btn-wix-luxury {
+  @apply px-12 py-5 bg-[var(--color-stone-900)] text-white font-serif text-xs tracking-[0.2em] uppercase hover:bg-[var(--color-gold)] transition-all duration-700 ease-in-out;
 }
 
-.section-title {
-  @apply text-5xl md:text-7xl font-serif mb-8 text-center leading-tight;
+.wix-input {
+  @apply bg-transparent border-b border-stone-200 py-3 outline-none font-serif text-lg focus:border-stone-900 transition-colors duration-500;
 }
 
-.section-kicker {
-  @apply text-[10px] font-bold uppercase tracking-[0.5em] text-[var(--color-gold)] block mb-6 text-center;
+/* Wix-style parallax container */
+.parallax-container {
+  @apply relative h-screen w-full overflow-hidden;
 }
 
-/* Custom Scrollbar */
+.parallax-image {
+  @apply absolute inset-0 w-full h-full object-cover grayscale opacity-60 transition-all duration-[2000ms] hover:grayscale-0 hover:opacity-100 hover:scale-105;
+}
+
+/* Custom Scrollbar for the Boutique look */
 ::-webkit-scrollbar {
-  width: 6px;
+  width: 4px;
 }
 ::-webkit-scrollbar-track {
   background: var(--color-stone-50);
 }
 ::-webkit-scrollbar-thumb {
   background: var(--color-stone-200);
-}
-::-webkit-scrollbar-thumb:hover {
-  background: var(--color-stone-300);
 }

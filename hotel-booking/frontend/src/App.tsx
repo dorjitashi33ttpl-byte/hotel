@@ -1,6 +1,10 @@
-import React from 'react';
+import React, { useState, useEffect } from 'react';
 import { BrowserRouter, Routes, Route, Link } from 'react-router-dom';
 import { QueryClient, QueryClientProvider } from 'react-query';
+import { ParallaxHero } from './components/landing/ParallaxHero';
+import { AvailabilityBar } from './components/landing/AvailabilityBar';
+import { PropertyStory } from './components/landing/PropertyStory';
+import { ExclusiveOffers } from './components/landing/ExclusiveOffers';
 import { TenantDashboard } from './pages/TenantDashboard';
 import { BookingFlow } from './pages/BookingFlow';
 import { DigitalCheckIn } from './pages/DigitalCheckIn';
@@ -10,50 +14,88 @@ import { GlobalSearch } from './components/common/GlobalSearch';
 
 const queryClient = new QueryClient();
 
-const Navbar = () => (
-  <nav className="bg-white border-b px-8 py-4 flex justify-between items-center sticky top-0 z-50">
-    <div className="flex items-center gap-12">
-      <Link to="/" className="text-2xl font-black text-blue-600">HOTEL.BT</Link>
-      <GlobalSearch />
-    </div>
-    <div className="flex gap-6 text-sm font-bold text-gray-500">
-      <Link to="/tenant" className="hover:text-blue-600">Property Center</Link>
-      <Link to="/admin" className="hover:text-blue-600">Admin</Link>
-      <button className="bg-gray-900 text-white px-5 py-2 rounded-xl text-sm font-bold shadow-lg shadow-gray-200">Sign In</button>
-    </div>
-  </nav>
-);
+const Navbar = () => {
+  const [scrolled, setScrolled] = useState(false);
+
+  useEffect(() => {
+    const handleScroll = () => setScrolled(window.scrollY > 50);
+    window.addEventListener('scroll', handleScroll);
+    return () => window.removeEventListener('scroll', handleScroll);
+  }, []);
+
+  return (
+    <nav className={`luxury-nav ${scrolled ? 'scrolled bg-white/90' : 'bg-transparent text-white border-transparent'}`}>
+      <div className="flex items-center gap-16">
+        <Link to="/" className="font-serif text-2xl font-bold tracking-tighter transition-transform hover:scale-105">
+          AMAN <span className="text-[10px] tracking-[0.4em] font-sans font-normal opacity-70 ml-2">BHUTAN</span>
+        </Link>
+        <div className="hidden items-center gap-8 text-[11px] font-bold uppercase tracking-[0.2em] md:flex">
+          <Link to="/" className="hover:opacity-50 transition-opacity">Experience</Link>
+          <Link to="/" className="hover:opacity-50 transition-opacity">Suites</Link>
+          <Link to="/" className="hover:opacity-50 transition-opacity">Wellness</Link>
+          <Link to="/" className="hover:opacity-50 transition-opacity">Dining</Link>
+        </div>
+      </div>
+      <div className="flex items-center gap-8 text-[11px] font-bold uppercase tracking-[0.2em]">
+        <GlobalSearch />
+        <Link to="/tenant" className="hover:opacity-50 transition-opacity">Owner Portal</Link>
+        <Link to="/admin" className="hover:opacity-50 transition-opacity">Admin</Link>
+        <button className="bg-stone-900 text-stone-50 px-6 py-2.5 hover:bg-stone-800 transition-colors">Book Now</button>
+      </div>
+    </nav>
+  );
+};
 
 function App() {
   return (
     <QueryClientProvider client={queryClient}>
       <BrowserRouter>
-        <div className="min-h-screen bg-gray-50 flex flex-col font-sans text-gray-900 antialiased">
+        <div className="min-h-screen flex flex-col antialiased bg-stone-50">
           <Navbar />
           <main className="flex-1">
             <Routes>
               <Route path="/" element={
-                <div className="p-24 text-center max-w-4xl mx-auto">
-                   <h1 className="text-7xl font-black tracking-tight leading-tight">Explore the <span className="text-blue-600 italic">unexplored</span> Bhutan.</h1>
-                   <p className="mt-8 text-xl text-gray-500 font-medium">Sustainable luxury, deep heritage, and seamless digital booking experience.</p>
-                   <div className="mt-12 flex justify-center gap-6">
-                      <Link to="/search" className="bg-blue-600 text-white px-8 py-4 rounded-2xl font-bold shadow-xl shadow-blue-100 hover:scale-105 transition-all">Search Hotels</Link>
-                      <button className="bg-white border border-gray-200 px-8 py-4 rounded-2xl font-bold hover:bg-gray-50 transition-all">How it works</button>
-                   </div>
-                </div>
+                <>
+                  <ParallaxHero />
+                  <AvailabilityBar />
+                  <PropertyStory />
+                  <ExclusiveOffers />
+                </>
               } />
-              <Route path="/search" element={<div className="p-10">Map Search results...</div>} />
+              <Route path="/search" element={<div className="p-24 font-serif text-4xl text-center">Curating your experience...</div>} />
               <Route path="/hotel/:id/book" element={<BookingFlow hotelId={1} roomTypeId={1} />} />
               <Route path="/checkin/:bid" element={<DigitalCheckIn />} />
               <Route path="/tenant/*" element={<TenantDashboard />} />
               <Route path="/admin" element={
-                <div className="max-w-7xl mx-auto p-12 space-y-12">
+                <div className="max-w-7xl mx-auto p-24 space-y-24">
                    <CountrySettings />
                    <PaymentRegistry />
                 </div>
               } />
             </Routes>
           </main>
+          <footer className="bg-stone-900 px-24 py-16 text-stone-400">
+             <div className="flex justify-between items-start border-b border-stone-800 pb-12">
+                <div className="font-serif text-2xl text-stone-50">AMAN</div>
+                <div className="flex gap-16 text-[10px] uppercase tracking-widest font-bold">
+                   <div className="flex flex-col gap-4">
+                      <span className="text-stone-600">Explore</span>
+                      <a href="#" className="hover:text-stone-50 transition-colors">Destinations</a>
+                      <a href="#" className="hover:text-stone-50 transition-colors">Private Jets</a>
+                      <a href="#" className="hover:text-stone-50 transition-colors">Residences</a>
+                   </div>
+                   <div className="flex flex-col gap-4">
+                      <span className="text-stone-600">Company</span>
+                      <a href="#" className="hover:text-stone-50 transition-colors">Sustainability</a>
+                      <a href="#" className="hover:text-stone-50 transition-colors">Careers</a>
+                      <a href="#" className="hover:text-stone-50 transition-colors">Press</a>
+                   </div>
+                </div>
+             </div>
+             <div className="mt-8 text-[10px] tracking-widest uppercase">
+                &copy; 2026 AMAN GROUP S.A. ALL RIGHTS RESERVED.
+             </div>
+          </footer>
         </div>
       </BrowserRouter>
     </QueryClientProvider>

@@ -1,174 +1,80 @@
 import React from 'react';
-import { View, Text, StyleSheet, FlatList, Image, TouchableOpacity, SafeAreaView } from 'react-native';
-import { Theme } from '../theme';
-import { MapPin, Star, Heart } from 'lucide-react-native';
+import { View, Text, StyleSheet, ScrollView, Image, TouchableOpacity, TextInput } from 'react-native';
+import { Colors } from '../theme/colors';
 
-const SearchScreen = () => {
-  const hotels = [
-    { id: '1', name: 'Aman Kora', city: 'Paro', price: 1200, rating: 4.9 },
-    { id: '2', name: 'Six Senses', city: 'Thimphu', price: 1500, rating: 5.0 },
-    { id: '3', name: 'Le Méridien', city: 'Thimphu', price: 450, rating: 4.7 },
-  ];
-
-  const renderHotel = ({ item }) => (
-    <TouchableOpacity style={styles.card} activeOpacity={0.9}>
-      <View style={styles.imageContainer}>
-        <Image
-          source={{ uri: 'https://images.unsplash.com/photo-1566073771259-6a8506099945?w=800&q=80' }}
-          style={styles.image}
-        />
-        <TouchableOpacity style={styles.heartButton}>
-          <Heart size={20} color={Theme.colors.muted} />
-        </TouchableOpacity>
-      </View>
-      <div style={styles.content}>
-        <View style={styles.headerRow}>
-          <Text style={styles.name}>{item.name}</Text>
-          <View style={styles.ratingRow}>
-            <Star size={12} color={Theme.colors.gold} fill={Theme.colors.gold} />
-            <Text style={styles.rating}>{item.rating}</Text>
-          </View>
-        </View>
-        <View style={styles.locationRow}>
-          <MapPin size={12} color={Theme.colors.gold} />
-          <Text style={styles.location}>{item.city}, Bhutan</Text>
-        </View>
-        <View style={styles.footerRow}>
-          <Text style={styles.priceLabel}>Starting from</Text>
-          <Text style={styles.price}>${item.price} <Text style={styles.perNight}>/ night</Text></Text>
-        </View>
-      </div>
-    </TouchableOpacity>
-  );
-
+export const SearchScreen = ({ navigation }: any) => {
   return (
-    <SafeAreaView style={styles.container}>
+    <ScrollView style={styles.container} contentContainerStyle={styles.content}>
       <View style={styles.header}>
-        <Text style={styles.title}>Explore Bhutan</Text>
-        <Text style={styles.subtitle}>DISCOVER REFINED COMFORT</Text>
+        <Text style={styles.kicker}>The Unexplored</Text>
+        <Text style={styles.title}>Kingdom of Bhutan</Text>
       </View>
-      <FlatList
-        data={hotels}
-        renderItem={renderHotel}
-        keyExtractor={item => item.id}
-        contentContainerStyle={styles.list}
-        showsVerticalScrollIndicator={false}
-      />
-    </SafeAreaView>
+
+      <View style={styles.searchBar}>
+        <TextInput
+          placeholder="Where to next?"
+          placeholderTextColor={Colors.stone400}
+          style={styles.searchInput}
+        />
+      </View>
+
+      <View style={styles.section}>
+        <Text style={styles.sectionTitle}>Curated Collections</Text>
+        <ScrollView horizontal showsHorizontalScrollIndicator={false} style={styles.horizontalScroll}>
+          {[1, 2, 3].map(i => (
+            <TouchableOpacity
+              key={i}
+              style={styles.card}
+              onPress={() => navigation.navigate('HotelDetail', { id: i })}
+            >
+              <Image
+                source={{ uri: i === 1 ? 'https://images.unsplash.com/photo-1520250497591-112f2f40a3f4?w=800' : 'https://images.unsplash.com/photo-1590073242678-70ee3fc28e8e?w=800' }}
+                style={styles.cardImage}
+              />
+              <View style={styles.cardInfo}>
+                <Text style={styles.hotelName}>{i === 1 ? 'Amankora Paro' : 'Zhiwa Ling'}</Text>
+                <Text style={styles.hotelLoc}>Paro Valley, Bhutan</Text>
+                <Text style={styles.price}>From $1,400</Text>
+              </View>
+            </TouchableOpacity>
+          ))}
+        </ScrollView>
+      </View>
+
+      <View style={styles.storySection}>
+        <Image
+          source={{ uri: 'https://images.unsplash.com/photo-1544644181-1484b3fdfc62?w=800' }}
+          style={styles.storyImage}
+        />
+        <View style={styles.storyOverlay}>
+          <Text style={styles.storyTitle}>Our Heritage</Text>
+          <Text style={styles.storyText}>A sanctuary in the land of happiness.</Text>
+        </View>
+      </View>
+    </ScrollView>
   );
 };
 
 const styles = StyleSheet.create({
-  container: {
-    flex: 1,
-    backgroundColor: Theme.colors.stone,
-  },
-  header: {
-    padding: Theme.spacing.lg,
-    paddingBottom: Theme.spacing.md,
-  },
-  title: {
-    fontSize: 32,
-    fontFamily: Theme.fonts.serif,
-    color: Theme.colors.charcoal,
-  },
-  subtitle: {
-    fontSize: 10,
-    letterSpacing: 2,
-    fontFamily: Theme.fonts.sans,
-    color: Theme.colors.gold,
-    fontWeight: '700',
-    marginTop: 4,
-  },
-  list: {
-    padding: Theme.spacing.lg,
-  },
-  card: {
-    backgroundColor: Theme.colors.white,
-    borderRadius: 2,
-    marginBottom: Theme.spacing.xl,
-    overflow: 'hidden',
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.05,
-    shadowRadius: 10,
-    elevation: 3,
-  },
-  imageContainer: {
-    height: 200,
-    width: '100%',
-  },
-  image: {
-    width: '100%',
-    height: '100%',
-  },
-  heartButton: {
-    position: 'absolute',
-    top: 12,
-    right: 12,
-    backgroundColor: 'rgba(255,255,255,0.8)',
-    padding: 8,
-    borderRadius: 20,
-  },
-  content: {
-    padding: Theme.spacing.md,
-  },
-  headerRow: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
-  },
-  name: {
-    fontSize: 20,
-    fontFamily: Theme.fonts.serif,
-    color: Theme.colors.charcoal,
-  },
-  ratingRow: {
-    flexDirection: 'row',
-    alignItems: 'center',
-  },
-  rating: {
-    fontSize: 12,
-    marginLeft: 4,
-    fontWeight: '700',
-    color: Theme.colors.charcoal,
-  },
-  locationRow: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    marginTop: 4,
-  },
-  location: {
-    fontSize: 11,
-    color: Theme.colors.muted,
-    marginLeft: 4,
-    textTransform: 'uppercase',
-    letterSpacing: 1,
-  },
-  footerRow: {
-    marginTop: Theme.spacing.lg,
-    borderTopWidth: 1,
-    borderTopColor: Theme.colors.beige,
-    paddingTop: Theme.spacing.md,
-  },
-  priceLabel: {
-    fontSize: 9,
-    textTransform: 'uppercase',
-    color: Theme.colors.muted,
-    letterSpacing: 1,
-    fontWeight: '700',
-  },
-  price: {
-    fontSize: 20,
-    fontFamily: Theme.fonts.serif,
-    color: Theme.colors.charcoal,
-    marginTop: 2,
-  },
-  perNight: {
-    fontSize: 10,
-    fontFamily: Theme.fonts.sans,
-    color: Theme.colors.muted,
-  }
+  container: { flex: 1, backgroundColor: Colors.stone50 },
+  content: { paddingBottom: 40 },
+  header: { padding: 24, paddingTop: 60 },
+  kicker: { fontSize: 10, fontWeight: 'bold', color: Colors.stone400, letterSpacing: 4, textTransform: 'uppercase', marginBottom: 8 },
+  title: { fontSize: 32, fontFamily: 'serif', color: Colors.stone900 },
+  searchBar: { marginHorizontal: 24, padding: 16, backgroundColor: Colors.white, borderBottomWidth: 1, borderBottomColor: Colors.stone200 },
+  searchInput: { fontSize: 16, fontFamily: 'serif' },
+  section: { marginTop: 40 },
+  sectionTitle: { fontSize: 12, fontWeight: 'bold', color: Colors.stone900, letterSpacing: 2, textTransform: 'uppercase', paddingHorizontal: 24, marginBottom: 20 },
+  horizontalScroll: { paddingLeft: 24 },
+  card: { width: 280, marginRight: 24, backgroundColor: Colors.white, shadowColor: '#000', shadowOffset: { width: 0, height: 2 }, shadowOpacity: 0.05, shadowRadius: 10, elevation: 2 },
+  cardImage: { width: '100%', height: 350, backgroundColor: Colors.stone100 },
+  cardInfo: { padding: 20 },
+  hotelName: { fontSize: 18, fontFamily: 'serif', marginBottom: 4 },
+  hotelLoc: { fontSize: 12, color: Colors.stone400, marginBottom: 12 },
+  price: { fontSize: 12, fontWeight: 'bold', color: Colors.stone900, letterSpacing: 1 },
+  storySection: { marginTop: 60, height: 400, position: 'relative' },
+  storyImage: { width: '100%', height: '100%' },
+  storyOverlay: { position: 'absolute', bottom: 40, left: 40, right: 40 },
+  storyTitle: { fontSize: 24, color: Colors.white, fontFamily: 'serif', marginBottom: 8 },
+  storyText: { fontSize: 14, color: Colors.stone200 },
 });
-
-export default SearchScreen;

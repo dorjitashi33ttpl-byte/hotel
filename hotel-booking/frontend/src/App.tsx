@@ -5,6 +5,7 @@ import { ParallaxHero } from './components/landing/ParallaxHero';
 import { AvailabilityBar } from './components/landing/AvailabilityBar';
 import { PropertyStory } from './components/landing/PropertyStory';
 import { ExclusiveOffers } from './components/landing/ExclusiveOffers';
+import { SuitesDining } from './components/landing/SuitesDining';
 import { TenantDashboard } from './pages/TenantDashboard';
 import { BookingFlow } from './pages/BookingFlow';
 import { DigitalCheckIn } from './pages/DigitalCheckIn';
@@ -59,6 +60,7 @@ function App() {
                   <ParallaxHero />
                   <AvailabilityBar />
                   <PropertyStory />
+                  <SuitesDining />
                   <ExclusiveOffers />
                 </>
               } />

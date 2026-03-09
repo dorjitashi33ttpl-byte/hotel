@@ -4,7 +4,11 @@ import { QueryClient, QueryClientProvider } from 'react-query';
 import { ParallaxHero } from './components/landing/ParallaxHero';
 import { AvailabilityBar } from './components/landing/AvailabilityBar';
 import { PropertyStory } from './components/landing/PropertyStory';
+import { SuitesPage } from './pages/SuitesPage';
+import { DiningPage } from './pages/DiningPage';
+import { WellnessPage } from './pages/WellnessPage';
 import { ExclusiveOffers } from './components/landing/ExclusiveOffers';
+import { LuxuryGallery } from './components/landing/LuxuryGallery';
 import { SuitesDining } from './components/landing/SuitesDining';
 import { Wellness } from './components/landing/Wellness';
 import { TenantDashboard } from './pages/TenantDashboard';
@@ -65,9 +69,13 @@ function App() {
                   <PropertyStory />
                   <SuitesDining />
                   <Wellness />
+                  <LuxuryGallery />
                   <ExclusiveOffers />
                 </>
               } />
+              <Route path="/suites" element={<SuitesPage />} />
+              <Route path="/dining" element={<DiningPage />} />
+              <Route path="/wellness" element={<WellnessPage />} />
               <Route path="/hotel/:id" element={<HotelDetail />} />
               <Route path="/search" element={<div className="p-24 font-serif text-4xl text-center">Curating your experience...</div>} />
               <Route path="/hotel/:id/book" element={<BookingFlow hotelId={1} roomTypeId={1} />} />

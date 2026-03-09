@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { HoldTimer } from '../components/common/HoldTimer';
+import { ChevronRight, ShieldCheck, MapPin } from 'lucide-react';
 
 interface BookingFlowProps {
   hotelId: number;
@@ -13,62 +14,136 @@ export const BookingFlow: React.FC<BookingFlowProps> = ({ hotelId, roomTypeId })
   const [expiry] = useState(new Date(Date.now() + 15 * 60000).toISOString());
 
   return (
-    <div className="max-w-4xl mx-auto p-8 bg-white shadow-xl rounded-2xl border border-gray-100 overflow-hidden mt-12">
-      <div className="flex justify-between items-center mb-8 px-12">
-        {[1, 2, 3].map(s => (
-          <div key={s} className="flex flex-col items-center z-10">
-            <div className={`w-10 h-10 rounded-full flex items-center justify-center font-bold mb-2 transition-all ${step >= s ? 'bg-blue-600 text-white scale-110' : 'bg-gray-100 text-gray-400'}`}>
-              {s}
-            </div>
-            <span className={`text-[10px] font-black uppercase tracking-widest ${step >= s ? 'text-blue-600' : 'text-gray-300'}`}>
-              {s === 1 ? 'Details' : s === 2 ? 'Payment' : 'Done'}
-            </span>
-          </div>
-        ))}
+    <div className="bg-stone-50 min-h-screen pt-24 pb-48 px-6">
+      <div className="max-w-7xl mx-auto grid grid-cols-1 lg:grid-cols-12 gap-24">
+
+        {/* Left Column: The Steps */}
+        <div className="lg:col-span-8">
+           <div className="mb-20">
+              <span className="text-[9px] font-bold uppercase tracking-[0.4em] text-gold block mb-4">Your Journey</span>
+              <div className="flex items-center gap-6">
+                 {[1, 2, 3].map(s => (
+                   <React.Fragment key={s}>
+                     <div className={`text-[10px] font-bold uppercase tracking-widest ${step >= s ? 'text-stone-900' : 'text-stone-300'}`}>
+                        {s === 1 ? 'Room' : s === 2 ? 'Details' : 'Done'}
+                     </div>
+                     {s < 3 && <ChevronRight className="w-3 h-3 text-stone-200" />}
+                   </React.Fragment>
+                 ))}
+              </div>
+           </div>
+
+           <AnimatePresence mode="wait">
+             {step === 1 && (
+               <motion.div key="step1" initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: -20 }} className="space-y-12">
+                  <h2 className="text-5xl font-serif">Select Your Sanctuary</h2>
+                  {[1, 2].map(r => (
+                    <div key={r} className="group cursor-pointer bg-white p-8 border border-stone-100 shadow-sm flex flex-col md:flex-row gap-12 hover:shadow-xl transition-all duration-500">
+                       <div className="md:w-1/3 aspect-video overflow-hidden">
+                          <img src={r === 1 ? "https://images.unsplash.com/photo-1590490360182-c33d57733427?w=800" : "https://images.unsplash.com/photo-1566665797739-1674de7a421a?w=800"} className="w-full h-full object-cover grayscale group-hover:grayscale-0 transition-all duration-1000" alt="Room" />
+                       </div>
+                       <div className="md:w-2/3 flex flex-col justify-between">
+                          <div>
+                            <h3 className="text-2xl font-serif mb-2">{r === 1 ? 'Valley View Suite' : 'Heritage Residence'}</h3>
+                            <p className="text-stone-500 text-sm font-light leading-relaxed">Spacious interior with hand-finished rammed earth walls and a private terrace overlooking the cedar forest.</p>
+                          </div>
+                          <div className="mt-8 flex justify-between items-end border-t border-stone-100 pt-6">
+                             <div>
+                                <span className="text-[9px] font-bold uppercase tracking-widest text-stone-400 block mb-1">From</span>
+                                <span className="text-xl font-serif text-gold">$1,400 <span className="text-xs italic text-stone-400">/ Night</span></span>
+                             </div>
+                             <button onClick={() => setStep(2)} className="bg-stone-900 text-white px-8 py-3 text-[10px] font-bold uppercase tracking-widest hover:bg-gold transition-colors">Select</button>
+                          </div>
+                       </div>
+                    </div>
+                  ))}
+               </motion.div>
+             )}
+
+             {step === 2 && (
+               <motion.div key="step2" initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: -20 }} className="space-y-16">
+                  <div className="flex justify-between items-end border-b border-stone-200 pb-8">
+                     <h2 className="text-5xl font-serif">Guest Details</h2>
+                     <HoldTimer expiry={expiry} />
+                  </div>
+
+                  <div className="grid grid-cols-2 gap-12">
+                     <div className="space-y-2">
+                        <label className="text-[9px] font-bold uppercase tracking-[0.2em] text-stone-400">First Name</label>
+                        <input type="text" className="w-full bg-transparent border-b border-stone-200 py-4 outline-none font-serif text-lg focus:border-stone-900 transition-colors" placeholder="Tashi" />
+                     </div>
+                     <div className="space-y-2">
+                        <label className="text-[9px] font-bold uppercase tracking-[0.2em] text-stone-400">Last Name</label>
+                        <input type="text" className="w-full bg-transparent border-b border-stone-200 py-4 outline-none font-serif text-lg focus:border-stone-900 transition-colors" placeholder="Dorji" />
+                     </div>
+                  </div>
+
+                  <div className="space-y-8 pt-8">
+                     <label className="text-[9px] font-bold uppercase tracking-[0.2em] text-stone-400 block">Payment Method</label>
+                     <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+                        {['stripe', 'razorpay', 'local_bank', 'cash'].map(m => (
+                          <button key={m} onClick={() => setPaymentMethod(m)} className={`p-6 border text-left transition-all ${paymentMethod === m ? 'border-stone-900 bg-stone-50 shadow-inner' : 'border-stone-100 hover:border-stone-300'}`}>
+                             <span className="text-[10px] font-bold uppercase tracking-widest">{m.replace('_', ' ')}</span>
+                          </button>
+                        ))}
+                     </div>
+                  </div>
+
+                  <button onClick={() => setStep(3)} className="w-full bg-stone-900 text-white py-6 font-serif text-sm uppercase tracking-[0.2em] hover:bg-gold transition-all duration-500">
+                     Confirm Reservation
+                  </button>
+               </motion.div>
+             )}
+
+             {step === 3 && (
+               <motion.div key="step3" initial={{ opacity: 0, scale: 0.95 }} animate={{ opacity: 1, scale: 1 }} className="bg-white p-24 text-center shadow-2xl border border-stone-100">
+                  <div className="w-16 h-16 bg-stone-900 text-white rounded-full flex items-center justify-center mx-auto mb-12">
+                     <ShieldCheck className="w-8 h-8" />
+                  </div>
+                  <h2 className="text-6xl font-serif mb-6">Reservation Secured</h2>
+                  <p className="text-stone-500 font-light text-xl italic max-w-xl mx-auto leading-relaxed mb-12">
+                     "In the high valleys of the Himalayas, time slows down. We look forward to welcoming you to the sanctuary."
+                  </p>
+                  <p className="text-stone-400 text-xs uppercase tracking-[0.4em] mb-16">Confirmation ID: #BT-88291</p>
+                  <button className="border border-stone-900 px-12 py-5 text-[10px] font-bold uppercase tracking-[0.4em] hover:bg-stone-900 hover:text-white transition-all duration-500">Return to Resort</button>
+               </motion.div>
+             )}
+           </AnimatePresence>
+        </div>
+
+        {/* Right Column: The Summary */}
+        <div className="lg:col-span-4">
+           <div className="sticky top-40 bg-white p-12 border border-stone-100 shadow-xl">
+              <h4 className="text-[10px] font-bold uppercase tracking-[0.4em] text-gold mb-12">Summary</h4>
+              <div className="space-y-8 border-b border-stone-100 pb-12">
+                 <div className="flex justify-between items-baseline">
+                    <span className="text-[9px] font-bold uppercase tracking-widest text-stone-400">Property</span>
+                    <span className="font-serif">Amankora Paro</span>
+                 </div>
+                 <div className="flex justify-between items-baseline">
+                    <span className="text-[9px] font-bold uppercase tracking-widest text-stone-400">Arrival</span>
+                    <span className="font-serif">01 June, 2026</span>
+                 </div>
+                 <div className="flex justify-between items-baseline">
+                    <span className="text-[9px] font-bold uppercase tracking-widest text-stone-400">Duration</span>
+                    <span className="font-serif italic">4 Nights</span>
+                 </div>
+              </div>
+              <div className="mt-12 space-y-4">
+                 <div className="flex justify-between font-serif text-2xl">
+                    <span>Total Amount</span>
+                    <span className="text-gold">$5,600</span>
+                 </div>
+                 <p className="text-[9px] text-stone-400 italic leading-relaxed">Inclusive of Bhutan Sustainable Development Fee (SDF) and all applicable taxes.</p>
+              </div>
+              <div className="mt-12 flex items-center gap-4 text-stone-400">
+                 <MapPin className="w-4 h-4" />
+                 <span className="text-[10px] font-bold uppercase tracking-widest">Paro, Bhutan</span>
+              </div>
+           </div>
+        </div>
+
       </div>
-
-      <AnimatePresence mode="wait">
-        {step === 1 && (
-          <motion.div key="step1" initial={{ x: 20, opacity: 0 }} animate={{ x: 0, opacity: 1 }} exit={{ x: -20, opacity: 0 }} className="space-y-6">
-            <h2 className="text-2xl font-bold mb-4">Thimphu Heritage Lodge</h2>
-            <div className="bg-gray-50 p-6 rounded-xl border border-gray-100">
-               <p className="text-gray-500 mb-2">Deluxe Room • 2 Guests • 3 Nights</p>
-               <div className="flex justify-between font-bold text-xl text-blue-600 border-t pt-4">
-                 <span>Total Amount</span>
-                 <span>BTN 15,000</span>
-               </div>
-            </div>
-            <button onClick={() => setStep(2)} className="w-full bg-blue-600 text-white py-4 rounded-xl font-bold shadow-lg shadow-blue-200">Reserve & Pay</button>
-          </motion.div>
-        )}
-
-        {step === 2 && (
-          <motion.div key="step2" initial={{ x: 20, opacity: 0 }} animate={{ x: 0, opacity: 1 }} exit={{ x: -20, opacity: 0 }} className="space-y-6">
-            <div className="flex justify-between items-center">
-               <h2 className="text-2xl font-bold">Select Payment</h2>
-               <HoldTimer expiry={expiry} />
-            </div>
-            <div className="grid grid-cols-2 gap-4">
-               {['stripe', 'razorpay', 'local_bank', 'cash'].map(m => (
-                 <button key={m} onClick={() => setPaymentMethod(m)} className={`p-6 border-2 rounded-xl text-left transition-all ${paymentMethod === m ? 'border-blue-600 bg-blue-50' : 'border-gray-200'}`}>
-                   <p className="font-bold capitalize">{m.replace('_', ' ')}</p>
-                 </button>
-               ))}
-            </div>
-            <button onClick={() => setStep(3)} className="w-full bg-blue-600 text-white py-4 rounded-xl font-bold">Confirm Payment</button>
-          </motion.div>
-        )}
-
-        {step === 3 && (
-          <motion.div key="step3" initial={{ scale: 0.9, opacity: 0 }} animate={{ scale: 1, opacity: 1 }} className="text-center py-12">
-            <div className="w-20 h-20 bg-green-100 text-green-600 rounded-full flex items-center justify-center mx-auto mb-6">
-               <svg className="w-10 h-10" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M5 13l4 4L19 7" /></svg>
-            </div>
-            <h2 className="text-3xl font-extrabold text-gray-900">Booking Confirmed!</h2>
-            <p className="text-gray-500 mt-4 px-12">Your heritage stay in Thimphu is reserved. Check your email for the digital key and property menu.</p>
-          </motion.div>
-        )}
-      </AnimatePresence>
     </div>
   );
 };

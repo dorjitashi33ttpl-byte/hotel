@@ -8,10 +8,12 @@ import { ExclusiveOffers } from './components/landing/ExclusiveOffers';
 import { SuitesDining } from './components/landing/SuitesDining';
 import { Wellness } from './components/landing/Wellness';
 import { TenantDashboard } from './pages/TenantDashboard';
+import HotelDetail from './pages/HotelDetail';
 import { BookingFlow } from './pages/BookingFlow';
 import { DigitalCheckIn } from './pages/DigitalCheckIn';
 import { CountrySettings } from './components/admin/CountrySettings';
 import { PaymentRegistry } from './components/admin/PaymentRegistry';
+import { ChatWidget } from './components/common/ChatWidget';
 import { GlobalSearch } from './components/common/GlobalSearch';
 
 const queryClient = new QueryClient();
@@ -66,6 +68,7 @@ function App() {
                   <ExclusiveOffers />
                 </>
               } />
+              <Route path="/hotel/:id" element={<HotelDetail />} />
               <Route path="/search" element={<div className="p-24 font-serif text-4xl text-center">Curating your experience...</div>} />
               <Route path="/hotel/:id/book" element={<BookingFlow hotelId={1} roomTypeId={1} />} />
               <Route path="/checkin/:bid" element={<DigitalCheckIn />} />
@@ -77,6 +80,7 @@ function App() {
                 </div>
               } />
             </Routes>
+          <ChatWidget />
           </main>
           <footer className="bg-stone-900 px-24 py-16 text-stone-400">
              <div className="flex justify-between items-start border-b border-stone-800 pb-12">

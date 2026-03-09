@@ -1,29 +1,37 @@
 # Definitive Hotel Booking & Management SaaS Documentation
 
-## World-Class Features Checklist
-1. **Multi-tenant isolation**: Enforced via tenant_id scoping.
-2. **Dual Inventory**: Mode A (Room-Type) & Mode B (Fixed Room) supported.
-3. **Payment Orchestration**: Pluggable gateways + bank redirect template engine.
-4. **Multi-country Localization**: Admin CSV tools & regional tax rules.
-5. **Mapbox Experience**: Geocoding, spatial search (ST_DWithin), and route polyline preview.
-6. **Background Automation**: Celery workers for cleanup & notifications.
-7. **Partner Ecosystem**: OAuth2 API + HMAC-signed webhooks.
-8. **Real-time Operations**: WebSocket chat & staff shift scheduling.
-9. **Guest Experience**: SSO, digital check-in (QR), verified reviews.
-10. **Fraud Risk Check**: Rule-based detection service.
-11. **Pricing Insights**: Real-time RevPAR & occupancy trends.
-12. **Infrastructure**: Hardened Docker, healthchecks, PostGIS spatial indexing.
-13. **Observability**: Structured JSON logging & Prometheus metrics.
+## "Masterpiece Edition" Design System
+Inspired by high-fidelity boutique hotel templates (Wix wh-1038), the design system prioritizes immersion and storytelling.
+- **Palette**: Stone (#FCFAF7), Gold (#B4975A), Charcoal (#1A1A1A).
+- **Typography**: Playfair Display (Serif) for narrative elements, Plus Jakarta Sans (Sans) for operational clarity.
+- **Interactions**: Framer Motion scroll-driven parallax, ultra-large serif titles, and smooth route transitions.
 
-## Setup & Deployment
-Refer to service-specific READMEs in backend/, frontend/, and mobile/ directories.
+## World-Class Features Checklist
+1. **Multi-tenant isolation**: Enforced via tenant_id scoping on all 50+ tables.
+2. **Dual Inventory**: Mode A (Room-Type) & Mode B (Fixed Room) supported with row-level locking.
+3. **Payment Orchestration**: Pluggable adapters (Stripe, Razorpay, PayPal) + Local Bank Template Engine.
+4. **Multi-country Localization**: Admin UI tools for Countries, States, and dynamic Tax Rules.
+5. **Mapbox Experience**: Reverse geocoding, spatial radius search (PostGIS), and Directions API polyline preview.
+6. **Background Automation**: Celery workers for hold cleanup, email notifications, and webhook retries.
+7. **Partner Ecosystem**: OAuth2 Client Credentials API + HMAC-SHA256 signed webhooks for OTAs.
+8. **Staff Operations**: Shift management templates, housekeeping dashboard (DIRTY/READY), and Walk-in Booking form.
+9. **Guest Experience**: Digital Check-in with QR key generation, Verified Reviews, and In-app Concierge Chat.
+10. **Yield Management**: Occupancy-based dynamic pricing rules and Length-of-Stay (LOS) discounts.
+11. **Fraud Detection**: IP-based risk scoring and frequency limiting for booking holds.
+12. **Infrastructure**: Production-hardened Docker, Redis caching for inventory, and PostGIS GIST indexing.
+13. **Analytics**: Revenue insights dashboard featuring RevPAR, ADR, and Occupancy forecasting.
 
 ## Multi-Channel Inventory Allocation
-The platform allows hotels to define `ChannelConfig` settings:
-- **Allocation %**: Percentage of total inventory reserved for a specific partner (e.g. Booking.com partner via API).
-- **Hardened Locks**: All allocation checks and reservations use PostgreSQL `FOR UPDATE` locks to ensure atomic consistency across concurrent search and hold requests.
+Hotels can define `ChannelConfig` settings to reserve inventory percentages for Partner APIs. All reservations use `SELECT ... FOR UPDATE` to prevent overbooking during high-concurrency periods.
 
-## Refund Orchestration
-Integrated automated refund flow for Stripe and PayPal via:
-- `POST /api/v1/tenant/payments/{id}/refund`
-- Manual review triggers for Local Bank transfers as specified in the registry.
+## Local Bank Integration (Template Engine)
+Admin UI allows configuring redirect URLs with dynamic placeholders:
+- `{{booking_id}}`, `{{amount}}`, `{{callback_url}}`
+- Signature Method: HMAC-SHA256 (Secret managed in registry)
+- Parameter Mapping: Map bank response fields to system statuses (e.g., "TX_SUCCESS" -> "PAID").
+
+## Self-Checkout & Housekeeping
+Guests can initiate "Self-Checkout" from the mobile app.
+1. Status transitions from `checked_in` to `checked_out`.
+2. Room status automatically set to `DIRTY`.
+3. Housekeeping dashboard updated in real-time for staff assignment.

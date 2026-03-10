@@ -15,6 +15,12 @@ import { TenantDashboard } from './pages/TenantDashboard';
 import HotelDetail from './pages/HotelDetail';
 import { BookingFlow } from './pages/BookingFlow';
 import { DigitalCheckIn } from './pages/DigitalCheckIn';
+import { AdminDashboard } from './pages/admin/AdminDashboard';
+import { UserManagement } from './pages/admin/UserManagement';
+import { RoleManagement } from './pages/admin/RoleManagement';
+import { TaxManagement } from './pages/admin/TaxManagement';
+import { CountryManagement } from './pages/admin/CountryManagement';
+import { AuditLogManagement } from './pages/admin/AuditLogManagement'; from './pages/admin/TaxManagement';
 import { CountrySettings } from './components/admin/CountrySettings';
 import { PaymentRegistry } from './components/admin/PaymentRegistry';
 import { BankTemplateConfig } from './components/admin/BankTemplateConfig'; from './components/admin/PaymentRegistry';
@@ -82,13 +88,18 @@ function App() {
               <Route path="/hotel/:id/book" element={<BookingFlow hotelId={1} roomTypeId={1} />} />
               <Route path="/checkin/:bid" element={<DigitalCheckIn />} />
               <Route path="/tenant/*" element={<TenantDashboard />} />
-              <Route path="/admin" element={
                 <div className="max-w-7xl mx-auto p-24 space-y-24">
                    <CountrySettings />
                    <PaymentRegistry />
                    <BankTemplateConfig />
                 </div>
               } />
+              <Route path="/admin" element={<AdminDashboard />} />
+              <Route path="/admin/users" element={<UserManagement />} />
+              <Route path="/admin/roles" element={<RoleManagement />} />
+              <Route path="/admin/tax" element={<TaxManagement />} />
+              <Route path="/admin/countries" element={<CountryManagement />} />
+              <Route path="/admin/audit" element={<AuditLogManagement />} />
             </Routes>
           <ChatWidget />
           </main>

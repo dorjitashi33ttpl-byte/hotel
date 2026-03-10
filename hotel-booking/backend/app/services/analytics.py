@@ -1,39 +1,37 @@
 from sqlalchemy.orm import Session
 from sqlalchemy import func
 from app.models.booking import Booking
-from app.models.payment import PaymentRecord
+from app.models.inventory import Room
 from datetime import datetime, timedelta
 
 class AnalyticsService:
     @staticmethod
-    async def get_tenant_revenue_metrics(db: Session, tenant_id: int):
-        last_30_days = datetime.utcnow() - timedelta(days=30)
-
-        # Calculate gross revenue
-        gross_rev = db.query(func.sum(Booking.total_amount)).filter(
-            Booking.tenant_id == tenant_id,
-            Booking.status.in_(["confirmed", "checked_in", "checked_out", "completed"]),
-            Booking.created_at >= last_30_days
+    async def calculate_yield_metrics(db: Session, hotel_id: int):
+        # 1. Total Revenue (Last 30 days)
+        thirty_days_ago = datetime.utcnow() - timedelta(days=30)
+        revenue = db.query(func.sum(Booking.total_amount)).filter(
+            Booking.tenant_id == hotel_id,
+            Booking.status == "confirmed",
+            Booking.created_at >= thirty_days_ago
         ).scalar() or 0
 
-        # Calculate platform commission (2%)
-        commission = gross_rev * 0.02
-
-        # Calculate current occupancy %
-        total_rooms = 20 # Placeholder for actual room count
+        # 2. Occupancy Rate
+        total_rooms = db.query(func.count(Room.id)).filter(Room.hotel_id == hotel_id).scalar() or 1
         occupied_rooms = db.query(func.count(Booking.id)).filter(
-            Booking.tenant_id == tenant_id,
+            Booking.tenant_id == hotel_id,
             Booking.status == "checked_in"
         ).scalar() or 0
 
-        occupancy_rate = (occupied_rooms / total_rooms) * 100 if total_rooms > 0 else 0
+        occupancy = (occupied_rooms / total_rooms) * 100
+
+        # 3. RevPAR (Revenue Per Available Room)
+        revpar = (revenue / total_rooms) / 30
 
         return {
-            "gross_revenue": gross_rev,
-            "net_revenue": gross_rev - commission,
-            "platform_commission": commission,
-            "occupancy_rate": occupancy_rate,
-            "period": "last_30_days"
+            "gross_revenue": revenue,
+            "occupancy_rate": occupancy,
+            "revpar": revpar,
+            "adr": (revenue / occupied_rooms) if occupied_rooms > 0 else 0
         }
 
 analytics_service = AnalyticsService()

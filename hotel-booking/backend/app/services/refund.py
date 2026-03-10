@@ -1,18 +1,18 @@
-from typing import Optional
-from app.services.payment import payment_service
 from app.models.payment import PaymentRecord
+from app.services.payment import payment_service
 from sqlalchemy.orm import Session
 
 class RefundEngine:
     @staticmethod
-    async def process_refund(db: Session, payment_id: int, amount: Optional[float] = None) -> bool:
+    async def initiate_automated_refund(db: Session, payment_id: int):
         payment = db.query(PaymentRecord).filter(PaymentRecord.id == payment_id).first()
         if not payment: return False
 
-        adapter = payment_service.get_adapter(payment.provider, {}) # Config would be fetched here
-        result = await adapter.refund(payment.provider_payment_id, amount)
+        # Call provider adapter
+        adapter = payment_service.get_adapter(payment.provider, {})
+        result = await adapter.refund(payment.provider_payment_id)
 
-        if result.get("status") == "succeeded" or result.get("status") == "manual":
+        if result.get("status") == "succeeded":
             payment.status = "refunded"
             db.commit()
             return True

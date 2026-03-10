@@ -22,7 +22,9 @@ class RecommendationService:
         if preferred_regions:
             query = query.order_by(Hotel.region_id.in_(preferred_regions).desc())
 
-        # 4. Limit to top 5 recommendations
+        # 4. Sort by reputation score
+        query = query.order_by(Hotel.reputation_score.desc())
+
         return query.limit(5).all()
 
 recommendation_service = RecommendationService()

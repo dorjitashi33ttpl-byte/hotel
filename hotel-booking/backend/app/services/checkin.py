@@ -1,38 +1,27 @@
+import qrcode
+from io import BytesIO
 from app.models.booking import Booking
-from sqlalchemy.orm import Session
-from typing import Dict, Any
+from app.services.storage import storage_service
 
 class CheckInService:
     @staticmethod
-    async def submit_pre_arrival(db: Session, booking_id: int, form_data: Dict[str, Any]):
-        booking = db.query(Booking).filter(Booking.id == booking_id).first()
-        if not booking: return False
+    async def generate_digital_key(booking: Booking) -> str:
+        # Secure token for check-in
+        token = f"KEY-{booking.id}-{booking.tenant_id}"
 
-        # Store pre-arrival metadata
-        booking.metadata_info = booking.metadata_info or {}
-        booking.metadata_info.update({
-            "pre_arrival_submitted": True,
-            "document_id": form_data.get("document_id"),
-            "expected_arrival": form_data.get("expected_arrival"),
-            "dietary_notes": form_data.get("dietary_notes")
-        )
+        # Generate QR Code
+        qr = qrcode.QRCode(version=1, box_size=10, border=5)
+        qr.add_data(token)
+        qr.make(fit=True)
 
-        db.commit()
-        return True
+        img = qr.make_image(fill_color="black", back_color="white")
+        buf = BytesIO()
+        img.save(buf)
+        buf.seek(0)
 
-    @staticmethod
-    async def verify_checkin_qr(db: Session, token: str) -> bool:
-        # Simple verification logic
-        # token format: KEY-{booking_id}-{user_id}
-        parts = token.split("-")
-        if len(parts) != 3: return False
-
-        booking_id = int(parts[1])
-        booking = db.query(Booking).filter(Booking.id == booking_id).first()
-        if booking and booking.status == "confirmed":
-            booking.status = "checked_in"
-            db.commit()
-            return True
-        return False
+        # Upload to media storage
+        path = f"keys/booking-{booking.id}.png"
+        url = await storage_service.upload_file(buf, path, "image/png")
+        return url
 
 checkin_service = CheckInService()

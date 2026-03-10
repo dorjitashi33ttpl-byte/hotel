@@ -2,14 +2,18 @@ import React, { useState } from 'react';
 import { View, Text, StyleSheet, ScrollView, TouchableOpacity, TextInput, KeyboardAvoidingView, Platform, ActivityIndicator } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { Colors } from '../theme/colors';
+import { useHaptics } from '../hooks/useHaptics';
 
 export const BookingScreen = ({ navigation }: any) => {
   const [loading, setLoading] = useState(false);
+  const { trigger } = useHaptics();
 
   const handleConfirm = () => {
+    trigger('medium');
     setLoading(true);
     setTimeout(() => {
       setLoading(false);
+      trigger('success');
       navigation.navigate('BookingDetail');
     }, 1500);
   };
@@ -29,19 +33,21 @@ export const BookingScreen = ({ navigation }: any) => {
           <View style={styles.form}>
              <View style={styles.inputGroup}>
                 <Text style={styles.label}>Full Name</Text>
-                <TextInput style={styles.input} placeholder="Tashi Dorji" placeholderTextColor={Colors.stone300} />
+                <TextInput
+                  style={styles.input}
+                  placeholder="Tashi Dorji"
+                  placeholderTextColor={Colors.stone300}
+                  onFocus={() => trigger('light')}
+                />
              </View>
              <View style={styles.inputGroup}>
                 <Text style={styles.label}>Email Address</Text>
-                <TextInput style={styles.input} placeholder="tashi.dorji@druk.bt" keyboardType="email-address" autoCapitalize="none" />
-             </View>
-             <View style={styles.inputGroup}>
-                <Text style={styles.label}>Special Requests</Text>
                 <TextInput
-                  style={[styles.input, { height: 100, paddingTop: 12 }]}
-                  placeholder="e.g. Late arrival, dietary preferences..."
-                  multiline
-                  textAlignVertical="top"
+                  style={styles.input}
+                  placeholder="tashi.dorji@druk.bt"
+                  keyboardType="email-address"
+                  autoCapitalize="none"
+                  onFocus={() => trigger('light')}
                 />
              </View>
           </View>
@@ -67,6 +73,7 @@ export const BookingScreen = ({ navigation }: any) => {
              style={styles.button}
              onPress={handleConfirm}
              disabled={loading}
+             activeOpacity={0.8}
            >
               {loading ? <ActivityIndicator color="#fff" /> : <Text style={styles.buttonText}>Confirm & Pay</Text>}
            </TouchableOpacity>

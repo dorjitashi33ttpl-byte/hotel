@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useState } from 'react';
 import { NavigationContainer } from '@react-navigation/native';
 import { createNativeStackNavigator } from '@react-navigation/native-stack';
 import { createBottomTabNavigator } from '@react-navigation/bottom-tabs';
@@ -6,6 +6,7 @@ import { QueryClientProvider } from 'react-query';
 import { SafeAreaProvider } from 'react-native-safe-area-context';
 import { queryClient } from './src/services/api';
 import { useNotifications } from './src/hooks/useNotifications';
+import { NotificationBanner } from './src/components/common/NotificationBanner';
 
 import { SearchScreen } from './src/screens/SearchScreen';
 import { HotelDetailScreen } from './src/screens/HotelDetailScreen';
@@ -36,9 +37,17 @@ function MainTabs() {
 }
 
 function NavigationRoot() {
-  useNotifications(); // Initialize notification listener
+  const [banner, setBanner] = useState({ visible: false, message: '', type: 'info' as any });
+  useNotifications();
+
   return (
     <NavigationContainer>
+      <NotificationBanner
+        visible={banner.visible}
+        message={banner.message}
+        type={banner.type}
+        onHide={() => setBanner({ ...banner, visible: false })}
+      />
       <Stack.Navigator
         screenOptions={{
           headerBackTitle: 'Back',
@@ -50,7 +59,7 @@ function NavigationRoot() {
         }}
       >
         <Stack.Screen name="Main" component={MainTabs} options={{ headerShown: false }} />
-        <Stack.Screen name="HotelDetail" component={HotelDetailScreen} options={{ title: 'The Sanctuary' }} />
+        <Stack.Screen name="HotelDetail" component={HotelDetailScreen} options={{ headerShown: false }} />
         <Stack.Screen name="Booking" component={BookingScreen} options={{ title: 'Reservation' }} />
         <Stack.Screen name="BookingDetail" component={BookingDetailScreen} options={{ title: 'Stay Details' }} />
         <Stack.Screen name="LateArrival" component={LateArrivalScreen} options={{ title: 'Arrival Update' }} />

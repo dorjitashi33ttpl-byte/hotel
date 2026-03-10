@@ -1,30 +1,54 @@
-import React from 'react';
-import { View, Text, StyleSheet, ScrollView, Image, TouchableOpacity, Dimensions, Platform, StatusBar } from 'react-native';
+import React, { useRef } from 'react';
+import { View, Text, StyleSheet, Image, TouchableOpacity, Dimensions, Platform, StatusBar, Animated } from 'react-native';
 import { Colors } from '../theme/colors';
+import { useHaptics } from '../hooks/useHaptics';
 
 const { width } = Dimensions.get('window');
+const HEADER_MAX_HEIGHT = 450;
+const HEADER_MIN_HEIGHT = Platform.OS === 'ios' ? 90 : 70;
+const HEADER_SCROLL_DISTANCE = HEADER_MAX_HEIGHT - HEADER_MIN_HEIGHT;
 
 export const HotelDetailScreen = ({ navigation }: any) => {
+  const scrollY = useRef(new Animated.Value(0)).current;
+  const { trigger } = useHaptics();
+
+  const headerTranslate = scrollY.interpolate({
+    inputRange: [0, HEADER_SCROLL_DISTANCE],
+    outputRange: [0, -HEADER_SCROLL_DISTANCE],
+    extrapolate: 'clamp',
+  });
+
+  const imageOpacity = scrollY.interpolate({
+    inputRange: [0, HEADER_SCROLL_DISTANCE / 2, HEADER_SCROLL_DISTANCE],
+    outputRange: [1, 1, 0],
+    extrapolate: 'clamp',
+  });
+
+  const imageTranslate = scrollY.interpolate({
+    inputRange: [0, HEADER_SCROLL_DISTANCE],
+    outputRange: [0, 100],
+    extrapolate: 'clamp',
+  });
+
+  const titleScale = scrollY.interpolate({
+    inputRange: [0, HEADER_SCROLL_DISTANCE / 2, HEADER_SCROLL_DISTANCE],
+    outputRange: [1, 1, 0.8],
+    extrapolate: 'clamp',
+  });
+
   return (
     <View style={{ flex: 1, backgroundColor: Colors.stone50 }}>
       <StatusBar barStyle="light-content" />
-      <ScrollView
-        style={styles.container}
-        contentContainerStyle={styles.content}
-        showsVerticalScrollIndicator={false}
-      >
-        <View style={styles.heroSection}>
-          <Image
-            source={{ uri: 'https://images.unsplash.com/photo-1571896349842-33c89424de2d?w=1200' }}
-            style={styles.heroImage}
-          />
-          <View style={styles.heroOverlay}>
-             <Text style={styles.heroKicker}>Boutique Sanctuary</Text>
-             <Text style={styles.heroTitle}>Amankora Paro</Text>
-             <Text style={styles.heroSubtitle}>Paro Valley, Bhutan</Text>
-          </View>
-        </View>
 
+      <Animated.ScrollView
+        style={{ flex: 1 }}
+        contentContainerStyle={{ paddingTop: HEADER_MAX_HEIGHT }}
+        scrollEventThrottle={16}
+        onScroll={Animated.event(
+          [{ nativeEvent: { contentOffset: { y: scrollY } } }],
+          { useNativeDriver: true }
+        )}
+      >
         <View style={styles.infoSection}>
            <Text style={styles.sectionTitle}>Refined Heritage</Text>
            <Text style={styles.description}>
@@ -32,21 +56,10 @@ export const HotelDetailScreen = ({ navigation }: any) => {
            </Text>
         </View>
 
-        <View style={styles.wellnessSection}>
-           <Image
-             source={{ uri: 'https://images.unsplash.com/photo-1544124499-58912cbddaad?w=800' }}
-             style={styles.wellnessImage}
-           />
-           <View style={styles.wellnessOverlay}>
-              <Text style={styles.wellnessTitle}>The Wellness Ritual</Text>
-              <Text style={styles.wellnessLink}>Discover More →</Text>
-           </View>
-        </View>
-
         <View style={styles.roomSection}>
            <Text style={styles.sectionTitle}>The Suites</Text>
            {[1, 2].map(r => (
-             <TouchableOpacity key={r} style={styles.roomCard} activeOpacity={0.9}>
+             <TouchableOpacity key={r} style={styles.roomCard} activeOpacity={0.9} onPress={() => trigger('light')}>
                 <Image
                   source={{ uri: r === 1 ? 'https://images.unsplash.com/photo-1590490360182-c33d57733427?w=800' : 'https://images.unsplash.com/photo-1566665797739-1674de7a421a?w=800' }}
                   style={styles.roomImage}
@@ -61,7 +74,27 @@ export const HotelDetailScreen = ({ navigation }: any) => {
              </TouchableOpacity>
            ))}
         </View>
-      </ScrollView>
+      </Animated.ScrollView>
+
+      {/* Parallax Header */}
+      <Animated.View style={[styles.header, { transform: [{ translateY: headerTranslate }] }]}>
+        <Animated.Image
+          style={[styles.backgroundImage, { opacity: imageOpacity, transform: [{ translateY: imageTranslate }] }]}
+          source={{ uri: 'https://images.unsplash.com/photo-1571896349842-33c89424de2d?w=1200' }}
+        />
+        <Animated.View style={[styles.headerOverlay, { transform: [{ scale: titleScale }] }]}>
+          <Text style={styles.heroKicker}>Boutique Sanctuary</Text>
+          <Text style={styles.heroTitle}>Amankora Paro</Text>
+        </Animated.View>
+      </Animated.View>
+
+      {/* Back Button */}
+      <TouchableOpacity
+        style={styles.backButton}
+        onPress={() => navigation.goBack()}
+      >
+        <Text style={styles.backButtonText}>←</Text>
+      </TouchableOpacity>
 
       <View style={styles.footer}>
          <View>
@@ -70,9 +103,9 @@ export const HotelDetailScreen = ({ navigation }: any) => {
          </View>
          <TouchableOpacity
            style={styles.bookButton}
-           onPress={() => navigation.navigate('Booking')}
+           onPress={() => { trigger('medium'); navigation.navigate('Booking'); }}
          >
-            <Text style={styles.bookButtonText}>Book My Stay</Text>
+            <Text style={styles.bookButtonText}>Book Now</Text>
          </TouchableOpacity>
       </View>
     </View>
@@ -80,22 +113,37 @@ export const HotelDetailScreen = ({ navigation }: any) => {
 };
 
 const styles = StyleSheet.create({
-  container: { flex: 1 },
-  content: { paddingBottom: 140 },
-  heroSection: { height: 500, position: 'relative' },
-  heroImage: { width: '100%', height: '100%', opacity: 0.9 },
-  heroOverlay: { position: 'absolute', bottom: 40, left: 32, right: 32 },
+  header: {
+    position: 'absolute',
+    top: 0,
+    left: 0,
+    right: 0,
+    backgroundColor: Colors.stone900,
+    height: HEADER_MAX_HEIGHT,
+    overflow: 'hidden',
+  },
+  backgroundImage: {
+    position: 'absolute',
+    top: 0,
+    left: 0,
+    right: 0,
+    width: null,
+    height: HEADER_MAX_HEIGHT,
+    resizeMode: 'cover',
+  },
+  headerOverlay: {
+    position: 'absolute',
+    bottom: 40,
+    left: 32,
+    right: 32,
+  },
   heroKicker: { fontSize: 10, fontWeight: 'bold', color: Colors.stone100, letterSpacing: 4, textTransform: 'uppercase', marginBottom: 12 },
   heroTitle: { fontSize: 40, color: Colors.white, fontFamily: Platform.OS === 'ios' ? 'Optima' : 'serif' },
-  heroSubtitle: { fontSize: 12, color: Colors.stone200, letterSpacing: 2, textTransform: 'uppercase', marginTop: 12 },
+  backButton: { position: 'absolute', top: 50, left: 24, zIndex: 100, width: 40, height: 40, backgroundColor: 'rgba(0,0,0,0.3)', borderRadius: 20, alignItems: 'center', justifyContent: 'center' },
+  backButtonText: { color: 'white', fontSize: 24, fontWeight: 'bold' },
   infoSection: { padding: 40 },
   sectionTitle: { fontSize: 10, fontWeight: 'bold', color: Colors.stone400, letterSpacing: 4, textTransform: 'uppercase', marginBottom: 24 },
   description: { fontSize: 22, lineHeight: 32, color: Colors.stone900, fontFamily: Platform.OS === 'ios' ? 'Optima' : 'serif' },
-  wellnessSection: { margin: 40, height: 400, position: 'relative', shadowColor: '#000', shadowOffset: { width: 0, height: 10 }, shadowOpacity: 0.1, shadowRadius: 20, elevation: 5 },
-  wellnessImage: { width: '100%', height: '100%', opacity: 0.9 },
-  wellnessOverlay: { position: 'absolute', bottom: 32, left: 32 },
-  wellnessTitle: { fontSize: 24, color: Colors.white, fontFamily: Platform.OS === 'ios' ? 'Optima' : 'serif', marginBottom: 8 },
-  wellnessLink: { fontSize: 10, color: Colors.white, fontWeight: 'bold', letterSpacing: 2, textTransform: 'uppercase' },
   roomSection: { paddingHorizontal: 40 },
   roomCard: { marginBottom: 48, borderBottomWidth: 1, borderBottomColor: Colors.stone100 },
   roomImage: { width: '100%', height: 280, backgroundColor: Colors.stone200 },

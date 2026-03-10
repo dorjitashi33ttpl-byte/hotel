@@ -1,12 +1,23 @@
-import React from 'react';
-import { View, Text, StyleSheet, ScrollView, Image, TouchableOpacity, TextInput, Platform } from 'react-native';
+import React, { useState } from 'react';
+import { View, Text, StyleSheet, ScrollView, Image, TouchableOpacity, TextInput, Platform, RefreshControl } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { Colors } from '../theme/colors';
+import { Skeleton } from '../components/common/Skeleton';
 
 export const SearchScreen = ({ navigation }: any) => {
+  const [loading, setLoading] = useState(false);
+
+  const onRefresh = () => {
+    setLoading(true);
+    setTimeout(() => setLoading(false), 1500);
+  };
+
   return (
     <SafeAreaView style={styles.container} edges={['top']}>
-      <ScrollView contentContainerStyle={styles.content}>
+      <ScrollView
+        contentContainerStyle={styles.content}
+        refreshControl={<RefreshControl refreshing={loading} onRefresh={onRefresh} tintColor={Colors.gold} />}
+      >
         <View style={styles.header}>
           <Text style={styles.kicker}>The Unexplored</Text>
           <Text style={styles.title}>Kingdom of Bhutan</Text>
@@ -23,37 +34,52 @@ export const SearchScreen = ({ navigation }: any) => {
         <View style={styles.section}>
           <Text style={styles.sectionTitle}>Curated Collections</Text>
           <ScrollView horizontal showsHorizontalScrollIndicator={false} style={styles.horizontalScroll}>
-            {[1, 2, 3].map(i => (
-              <TouchableOpacity
-                key={i}
-                style={styles.card}
-                onPress={() => navigation.navigate('HotelDetail', { id: i })}
-                activeOpacity={0.8}
-              >
-                <Image
-                  source={{ uri: i === 1 ? 'https://images.unsplash.com/photo-1520250497591-112f2f40a3f4?w=800' : 'https://images.unsplash.com/photo-1590073242678-70ee3fc28e8e?w=800' }}
-                  style={styles.cardImage}
-                />
-                <View style={styles.cardInfo}>
-                  <Text style={styles.hotelName}>{i === 1 ? 'Amankora Paro' : 'Zhiwa Ling'}</Text>
-                  <Text style={styles.hotelLoc}>Paro Valley, Bhutan</Text>
-                  <Text style={styles.price}>From $1,400</Text>
+            {loading ? (
+              [1, 2].map(i => (
+                <View key={i} style={[styles.card, { padding: 0 }]}>
+                   <Skeleton width={280} height={350} />
+                   <View style={styles.cardInfo}>
+                      <Skeleton width={180} height={20} style={{ marginBottom: 8 }} />
+                      <Skeleton width={120} height={14} style={{ marginBottom: 12 }} />
+                      <Skeleton width={80} height={14} />
+                   </View>
                 </View>
-              </TouchableOpacity>
-            ))}
+              ))
+            ) : (
+              [1, 2, 3].map(i => (
+                <TouchableOpacity
+                  key={i}
+                  style={styles.card}
+                  onPress={() => navigation.navigate('HotelDetail', { id: i })}
+                  activeOpacity={0.8}
+                >
+                  <Image
+                    source={{ uri: i === 1 ? 'https://images.unsplash.com/photo-1520250497591-112f2f40a3f4?w=800' : 'https://images.unsplash.com/photo-1590073242678-70ee3fc28e8e?w=800' }}
+                    style={styles.cardImage}
+                  />
+                  <View style={styles.cardInfo}>
+                    <Text style={styles.hotelName}>{i === 1 ? 'Amankora Paro' : 'Zhiwa Ling'}</Text>
+                    <Text style={styles.hotelLoc}>Paro Valley, Bhutan</Text>
+                    <Text style={styles.price}>From $1,400</Text>
+                  </View>
+                </TouchableOpacity>
+              ))
+            )}
           </ScrollView>
         </View>
 
-        <View style={styles.storySection}>
-          <Image
-            source={{ uri: 'https://images.unsplash.com/photo-1544644181-1484b3fdfc62?w=800' }}
-            style={styles.storyImage}
-          />
-          <View style={styles.storyOverlay}>
-            <Text style={styles.storyTitle}>Our Heritage</Text>
-            <Text style={styles.storyText}>A sanctuary in the land of happiness.</Text>
+        {!loading && (
+          <View style={styles.storySection}>
+            <Image
+              source={{ uri: 'https://images.unsplash.com/photo-1544644181-1484b3fdfc62?w=800' }}
+              style={styles.storyImage}
+            />
+            <View style={styles.storyOverlay}>
+              <Text style={styles.storyTitle}>Our Heritage</Text>
+              <Text style={styles.storyText}>A sanctuary in the land of happiness.</Text>
+            </View>
           </View>
-        </View>
+        )}
       </ScrollView>
     </SafeAreaView>
   );

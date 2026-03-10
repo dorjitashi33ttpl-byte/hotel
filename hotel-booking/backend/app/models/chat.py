@@ -1,16 +1,23 @@
-from sqlalchemy import Column, String, Integer, ForeignKey, DateTime, Boolean
+from sqlalchemy import Column, Integer, String, DateTime, ForeignKey, Text
 from sqlalchemy.orm import relationship
-from .base import Base
+from datetime import datetime
+from app.models.base import Base
+
+class ChatRoom(Base):
+    __tablename__ = "chat_rooms"
+    id = Column(Integer, primary_key=True, index=True)
+    tenant_id = Column(Integer, ForeignKey("tenants.id"), index=True)
+    user_id = Column(Integer, ForeignKey("users.id"), index=True)
+    created_at = Column(DateTime, default=datetime.utcnow)
+
+    messages = relationship("ChatMessage", back_populates="room")
 
 class ChatMessage(Base):
     __tablename__ = "chat_messages"
     id = Column(Integer, primary_key=True, index=True)
-    tenant_id = Column(Integer, ForeignKey("tenants.id"))
-    hotel_id = Column(Integer, ForeignKey("hotels.id"))
+    room_id = Column(Integer, ForeignKey("chat_rooms.id"), index=True)
     sender_id = Column(Integer, ForeignKey("users.id"))
-    receiver_id = Column(Integer, ForeignKey("users.id"), nullable=True) # Staff/Customer
-    message = Column(String)
-    is_read = Column(Boolean, default=False)
+    content = Column(Text)
+    created_at = Column(DateTime, default=datetime.utcnow)
 
-    sender = relationship("User", foreign_keys=[sender_id])
-    receiver = relationship("User", foreign_keys=[receiver_id])
+    room = relationship("ChatRoom", back_populates="messages")

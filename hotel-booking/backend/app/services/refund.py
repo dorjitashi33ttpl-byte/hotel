@@ -1,26 +1,21 @@
-from typing import Dict, Any, Optional
-from sqlalchemy.orm import Session
-from app.models.payment import Payment
+from typing import Optional
 from app.services.payment import payment_service
+from app.models.payment import PaymentRecord
+from sqlalchemy.orm import Session
 
-class RefundService:
+class RefundEngine:
     @staticmethod
-    async def process_refund(db: Session, payment_id: int, amount: Optional[float] = None) -> Dict[str, Any]:
-        payment = db.query(Payment).filter(Payment.id == payment_id).first()
-        if not payment:
-            return {"status": "failed", "message": "Payment record not found"}
+    async def process_refund(db: Session, payment_id: int, amount: Optional[float] = None) -> bool:
+        payment = db.query(PaymentRecord).filter(PaymentRecord.id == payment_id).first()
+        if not payment: return False
 
-        # Determine provider and get appropriate adapter
-        # config = payment_config_service.get_provider_config(...)
-        config = {} # placeholder for demo
-        adapter = payment_service.get_adapter(payment.provider, config)
+        adapter = payment_service.get_adapter(payment.provider, {}) # Config would be fetched here
+        result = await adapter.refund(payment.provider_payment_id, amount)
 
-        result = await adapter.refund_payment(payment.provider_payment_id, amount)
-
-        if result["status"] == "succeeded":
+        if result.get("status") == "succeeded" or result.get("status") == "manual":
             payment.status = "refunded"
             db.commit()
+            return True
+        return False
 
-        return result
-
-refund_service = RefundService()
+refund_engine = RefundEngine()

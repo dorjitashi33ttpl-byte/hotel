@@ -1,26 +1,23 @@
-from typing import Dict, Any
-from sqlalchemy.orm import Session
-from app.models.booking import Booking
+from app.models.user import User
 
 class FraudCheckService:
     @staticmethod
-    def calculate_risk_score(db: Session, user_id: int, ip_address: str) -> float:
-        score = 0.0
+    async def run_check(user: User, ip_address: str) -> dict:
+        risk_score = 0
+        reasons = []
 
-        # 1. Check recent booking frequency
-        # count = db.query(Booking).filter(Booking.user_id == user_id, ...).count()
-        # if count > 5: score += 0.5
+        # Example rules
+        if not user.is_active:
+            risk_score += 100
+            reasons.append("Inactive user account")
 
-        # 2. Check for blacklisted IPs (mocked)
-        if ip_address == "1.2.3.4": score += 1.0
+        # In a real app, check booking frequency, blacklisted IPs, etc.
+        # if await redis.get(f"holds:{ip_address}") > 5: risk_score += 50
 
-        return min(score, 1.0)
-
-    @staticmethod
-    def check_booking(user_id: int, ip_address: str, payment_method: str) -> bool:
-        # If risk score >= 0.8, block booking
-        # score = FraudCheckService.calculate_risk_score(None, user_id, ip_address)
-        # return score < 0.8
-        return True
+        return {
+            "is_blocked": risk_score >= 100,
+            "risk_score": risk_score,
+            "reasons": reasons
+        }
 
 fraud_check_service = FraudCheckService()

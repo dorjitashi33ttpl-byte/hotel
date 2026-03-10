@@ -1,32 +1,39 @@
-from datetime import date, timedelta
-from sqlalchemy.ext.asyncio import AsyncSession
-from sqlalchemy import select, func
-from app.models.hotel import Booking, RoomType
-from decimal import Decimal
+from sqlalchemy.orm import Session
+from sqlalchemy import func
+from app.models.booking import Booking
+from app.models.payment import PaymentRecord
+from datetime import datetime, timedelta
 
 class AnalyticsService:
     @staticmethod
-    async def get_revenue_forecast(db: AsyncSession, hotel_id: str, days: int = 30):
-        """
-        Predict revenue based on current bookings and historical pickup pace.
-        """
-        start_date = date.today()
-        end_date = start_date + timedelta(days=days)
+    async def get_tenant_revenue_metrics(db: Session, tenant_id: int):
+        last_30_days = datetime.utcnow() - timedelta(days=30)
 
-        # Current booked revenue
-        booked_rev_stmt = select(func.sum(Booking.total_price)).where(
-            Booking.hotel_id == hotel_id,
-            Booking.status.in_(["CONFIRMED", "CHECKED_IN", "COMPLETED"]),
-            Booking.check_in >= start_date,
-            Booking.check_in <= end_date
-        )
-        booked_revenue = (await db.execute(booked_rev_stmt)).scalar() or Decimal("0.00")
+        # Calculate gross revenue
+        gross_rev = db.query(func.sum(Booking.total_amount)).filter(
+            Booking.tenant_id == tenant_id,
+            Booking.status.in_(["confirmed", "checked_in", "checked_out", "completed"]),
+            Booking.created_at >= last_30_days
+        ).scalar() or 0
 
-        # Simple forecasting: Occupancy * ADR (Average Daily Rate)
-        # In real life, this would use a more complex ML model or pickup logic
+        # Calculate platform commission (2%)
+        commission = gross_rev * 0.02
+
+        # Calculate current occupancy %
+        total_rooms = 20 # Placeholder for actual room count
+        occupied_rooms = db.query(func.count(Booking.id)).filter(
+            Booking.tenant_id == tenant_id,
+            Booking.status == "checked_in"
+        ).scalar() or 0
+
+        occupancy_rate = (occupied_rooms / total_rooms) * 100 if total_rooms > 0 else 0
+
         return {
-            "period_days": days,
-            "confirmed_revenue": booked_revenue,
-            "projected_upside": booked_revenue * Decimal("0.15"), # Placeholder for 15% pickup
-            "total_forecast": booked_revenue * Decimal("1.15")
+            "gross_revenue": gross_rev,
+            "net_revenue": gross_rev - commission,
+            "platform_commission": commission,
+            "occupancy_rate": occupancy_rate,
+            "period": "last_30_days"
         }
+
+analytics_service = AnalyticsService()

@@ -1,28 +1,37 @@
 import React from 'react';
+import { DataTable } from './framework/DataTable';
+import { StatusBadge } from './framework/StatusBadge';
+import { Eye } from 'lucide-react';
 
 export const WebhookLogViewer: React.FC = () => {
+  const columns = [
+    { key: 'id', header: 'ID' },
+    { key: 'target', header: 'Partner App / Gateway' },
+    { key: 'event', header: 'Event Type' },
+    { key: 'attempts', header: 'Retry Count' },
+    {
+      key: 'status',
+      header: 'Delivery Status',
+      render: (val: string) => <StatusBadge status={val} />
+    },
+    { key: 'timestamp', header: 'Last Attempt' },
+  ];
+
+  const mockData = [
+    { id: 'WH-8821', target: 'Stripe Connect', event: 'payment.succeeded', attempts: 1, status: 'Success', timestamp: '2026-06-01 14:22:01' },
+    { id: 'WH-8819', target: 'Agoda Partner API', event: 'booking.confirmed', attempts: 3, status: 'Failed', timestamp: '2026-06-01 14:15:44' },
+    { id: 'WH-8815', target: 'Razorpay Webhook', event: 'refund.processed', attempts: 1, status: 'Success', timestamp: '2026-06-01 14:05:12' },
+  ];
+
   return (
-    <div className="p-8 bg-white shadow-2xl rounded-[40px] border border-gray-100">
-      <h2 className="text-2xl font-black text-gray-900 mb-8">Webhook Delivery Logs</h2>
-      <div className="space-y-4">
-        {[
-          { partner: 'Expedia BT', event: 'booking.confirmed', status: 200, time: '2 mins ago' },
-          { partner: 'Priceline', event: 'booking.cancelled', status: 500, time: '10 mins ago' }
-        ].map((log, i) => (
-          <div key={i} className="flex justify-between items-center p-6 bg-gray-50 rounded-2xl border border-gray-100">
-             <div>
-                <p className="font-bold text-gray-900">{log.event}</p>
-                <p className="text-xs text-gray-400">Partner: {log.partner}</p>
-             </div>
-             <div className="text-right">
-                <span className={`px-3 py-1 rounded-lg text-xs font-black ${log.status === 200 ? 'bg-green-100 text-green-700' : 'bg-red-100 text-red-700'}`}>
-                   HTTP {log.status}
-                </span>
-                <p className="text-[10px] text-gray-400 mt-2 font-bold uppercase tracking-widest">{log.time}</p>
-             </div>
-          </div>
-        ))}
-      </div>
+    <div className="space-y-12">
+      <DataTable
+        title="Webhook Chronicles"
+        description="Monitor the synchronization state between our sanctuary and external realms."
+        columns={columns}
+        data={mockData}
+        onView={(log) => alert('Inspecting Raw JSON for ' + log.id)}
+      />
     </div>
   );
 };

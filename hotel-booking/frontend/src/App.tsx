@@ -20,7 +20,8 @@ import { UserManagement } from './pages/admin/UserManagement';
 import { RoleManagement } from './pages/admin/RoleManagement';
 import { TaxManagement } from './pages/admin/TaxManagement';
 import { CountryManagement } from './pages/admin/CountryManagement';
-import { AuditLogManagement } from './pages/admin/AuditLogManagement'; from './pages/admin/TaxManagement';
+import { AuditLogManagement } from './pages/admin/AuditLogManagement';
+import { ReviewManagement } from './pages/admin/ReviewManagement'; from './pages/admin/AuditLogManagement'; from './pages/admin/TaxManagement';
 import { CountrySettings } from './components/admin/CountrySettings';
 import { PaymentRegistry } from './components/admin/PaymentRegistry';
 import { BankTemplateConfig } from './components/admin/BankTemplateConfig'; from './components/admin/PaymentRegistry';
@@ -100,6 +101,7 @@ function App() {
               <Route path="/admin/tax" element={<TaxManagement />} />
               <Route path="/admin/countries" element={<CountryManagement />} />
               <Route path="/admin/audit" element={<AuditLogManagement />} />
+              <Route path="/admin/reviews" element={<ReviewManagement />} />
             </Routes>
           <ChatWidget />
           </main>

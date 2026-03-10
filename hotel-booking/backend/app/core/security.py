@@ -1,42 +1,18 @@
-from datetime import datetime, timedelta
-from typing import Any, Union, Optional
-import base64
-from jose import jwt
-from passlib.context import CryptContext
-from cryptography.fernet import Fernet
-from app.core.config import settings
+import hmac
+import hashlib
+from typing import Any
 
-pwd_context = CryptContext(schemes=["bcrypt"], deprecated="auto")
-ALGORITHM = "HS256"
+class WebhookSecurity:
+    @staticmethod
+    def verify_signature(payload: Any, signature: str, secret: str) -> bool:
+        if not secret: return False
 
-_key_bytes = settings.SECRET_KEY.encode().ljust(32)[:32]
-ENCRYPTION_KEY = base64.urlsafe_b64encode(_key_bytes).decode()
-fernet = Fernet(ENCRYPTION_KEY)
+        computed_sig = hmac.new(
+            secret.encode(),
+            payload.encode() if isinstance(payload, str) else str(payload).encode(),
+            hashlib.sha256
+        ).hexdigest()
 
-def encrypt_data(data: str) -> str:
-    return fernet.encrypt(data.encode()).decode()
+        return hmac.compare_digest(computed_sig, signature)
 
-def decrypt_data(encrypted: str) -> str:
-    return fernet.decrypt(encrypted.encode()).decode()
-
-def create_access_token(subject: Union[str, Any], expires_delta: Optional[timedelta] = None) -> str:
-    if expires_delta:
-        expire = datetime.utcnow() + expires_delta
-    else:
-        expire = datetime.utcnow() + timedelta(minutes=settings.ACCESS_TOKEN_EXPIRE_MINUTES)
-    to_encode = {"exp": expire, "sub": str(subject), "type": "access"}
-    return jwt.encode(to_encode, settings.SECRET_KEY, algorithm=ALGORITHM)
-
-def create_refresh_token(subject: Union[str, Any]) -> str:
-    expire = datetime.utcnow() + timedelta(days=30)
-    to_encode = {"exp": expire, "sub": str(subject), "type": "refresh"}
-    return jwt.encode(to_encode, settings.SECRET_KEY, algorithm=ALGORITHM)
-
-def verify_password(plain_password: str, hashed_password: str) -> bool:
-    return pwd_context.verify(plain_password, hashed_password)
-
-def get_password_hash(password: str) -> str:
-    return pwd_context.hash(password)
-
-def decode_token(token: str) -> dict:
-    return jwt.decode(token, settings.SECRET_KEY, algorithms=[ALGORITHM])
+webhook_security = WebhookSecurity()

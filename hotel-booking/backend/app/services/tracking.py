@@ -1,16 +1,18 @@
-import json
-from app.core.redis import redis_client
+import aioredis
+from app.core.config import settings
 
 class TrackingService:
-    @staticmethod
-    async def track_view(user_id: str, hotel_id: str):
-        key = f"recent_views:{user_id}"
-        # Store as a list, keep only last 5
-        await redis_client.lpush(key, hotel_id)
-        await redis_client.ltrim(key, 0, 4)
-        await redis_client.expire(key, 86400 * 7) # 1 week
+    def __init__(self):
+        self.redis = aioredis.from_url(settings.REDIS_URL, decode_responses=True)
 
-    @staticmethod
-    async def get_recent_views(user_id: str):
-        key = f"recent_views:{user_id}"
-        return await redis_client.lrange(key, 0, -1)
+    async def track_view(self, user_id: int, hotel_id: int):
+        key = f"user:{user_id}:recent_hotels"
+        # Store last 5 viewed hotels
+        await self.redis.lpush(key, hotel_id)
+        await self.redis.ltrim(key, 0, 4)
+
+    async def get_recent_hotels(self, user_id: int):
+        key = f"user:{user_id}:recent_hotels"
+        return await self.redis.lrange(key, 0, -1)
+
+tracking_service = TrackingService()

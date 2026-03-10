@@ -1,12 +1,15 @@
-from app.services.payment import payment_service
-from app.services.inventory import inventory_service
+import pytest
+from app.services.commission import commission_service
+from app.models.booking import Booking
 
-def test_payment_service_get_adapter():
-    # Test if adapter factory works
-    config = {"api_key": "test_key"}
-    adapter = payment_service.get_adapter("stripe", config)
-    assert adapter is not None
+@pytest.mark.asyncio
+async def test_commission_calculation(db_session):
+    booking = Booking(id=1, tenant_id=1, total_amount=1000.0)
+    ledger = await commission_service.record_commission(db_session, booking)
+    assert ledger.commission_amount == 20.0
+    assert ledger.net_to_hotel == 980.0
 
-def test_inventory_logic_simple():
-    # Placeholder for logic test
-    assert True
+@pytest.mark.asyncio
+async def test_inventory_check(db_session):
+    # Setup mock inventory and check
+    pass

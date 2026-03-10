@@ -1,12 +1,13 @@
-{% extends "notification_base.html" %}
-{% block content %}
-<h1 style="font-weight: 900; color: #1e293b; margin-bottom: 24px;">Your stay is confirmed.</h1>
-<p style="color: #64748b; font-size: 18px; line-height: 28px;">Get ready for Bhutan! Your reservation at <strong>{{ hotel_name }}</strong> is officially booked.</p>
-
-<div style="background: #eff6ff; border-radius: 16px; padding: 24px; margin: 32px 0;">
-  <p style="margin: 0; color: #1d4ed8; font-weight: bold; font-size: 14px; text-transform: uppercase;">Check-in window</p>
-  <p style="margin: 8px 0 0 0; font-size: 20px; font-weight: bold;">{{ check_in }}</p>
-</div>
-
-<p style="font-size: 14px; color: #94a3b8;">Staff on shift for your arrival: <strong>{{ shift_staff }}</strong></p>
-{% endblock %}
+<html>
+<body>
+  <h1>Booking Confirmed!</h1>
+  <p>Hello {{ customer_name }},</p>
+  <p>Your stay at <strong>{{ hotel_name }}</strong> is confirmed.</p>
+  <p>Dates: {{ check_in }} to {{ check_out }}</p>
+  <p>Address: {{ hotel_address }}</p>
+  <p>Focal Person: {{ focal_person }} ({{ focal_phone }})</p>
+  <hr>
+  <p>On-shift Staff: {{ staff_name }}</p>
+  <p><a href="{{ menu_url }}">View Property Menu (PDF)</a></p>
+</body>
+</html>

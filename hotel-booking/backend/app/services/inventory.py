@@ -1,32 +1,47 @@
 from sqlalchemy.orm import Session
-from sqlalchemy import func
-from app.models.inventory import RoomType, Room, BookingInventory, ChannelConfig
+from sqlalchemy import select, and_, func
+from app.models.inventory import Room, BookingInventory, RoomType
 from datetime import date
+from typing import List, Optional
 
 class InventoryService:
     @staticmethod
-    async def check_channel_allocation(db: Session, hotel_id: int, channel: str, count: int) -> bool:
-        config = db.query(ChannelConfig).filter(ChannelConfig.hotel_id == hotel_id, ChannelConfig.channel_name == channel).first()
-        if not config or not config.is_active: return True
+    async def get_available_rooms(db: Session, hotel_id: int, start_date: date, end_date: date, room_type_id: Optional[int] = None) -> List[Room]:
+        # Subquery to find rooms already booked in the date range
+        booked_rooms_stmt = select(BookingInventory.room_id).where(
+            and_(
+                BookingInventory.date >= start_date,
+                BookingInventory.date < end_date
+            )
+        )
 
-        # Simple check: channel can't take more than its allocation % of total rooms
-        total_rooms = db.query(func.count(Room.id)).filter(Room.hotel_id == hotel_id).scalar()
-        if (count / total_rooms) * 100 > config.allocation_percentage:
-            return False
-        return True
+        # Filter rooms that are not in the booked subquery and belong to the hotel
+        query = select(Room).where(
+            and_(
+                Room.hotel_id == hotel_id,
+                Room.is_active == True,
+                Room.id.not_in(booked_rooms_stmt)
+            )
+        )
+
+        if room_type_id:
+            query = query.where(Room.room_type_id == room_type_id)
+
+        result = db.execute(query)
+        return result.scalars().all()
 
     @staticmethod
-    async def get_available_count(db: Session, room_type_id: int, start_date: date, end_date: date) -> int:
-        room_type = db.query(RoomType).filter(RoomType.id == room_type_id).first()
-        if not room_type: return 0
-
-        # Subtract confirmed bookings in range
-        booked = db.query(func.sum(BookingInventory.quantity)).filter(
-            BookingInventory.room_type_id == room_type_id,
-            BookingInventory.date >= start_date,
-            BookingInventory.date < end_date
-        ).scalar() or 0
-
-        return room_type.total_quantity - booked
+    async def reserve_specific_room(db: Session, room_id: int, start_date: date, end_date: date, booking_id: int):
+        # Transaction safety: The caller should ensure this is wrapped in a DB transaction
+        for d in range((end_date - start_date).days):
+            target_date = date.fromordinal(start_date.toordinal() + d)
+            inv = BookingInventory(
+                room_id=room_id,
+                date=target_date,
+                booking_id=booking_id,
+                quantity=1
+            )
+            db.add(inv)
+        db.commit()
 
 inventory_service = InventoryService()

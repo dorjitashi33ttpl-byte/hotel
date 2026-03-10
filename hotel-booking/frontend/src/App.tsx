@@ -20,8 +20,13 @@ import { UserManagement } from './pages/admin/UserManagement';
 import { RoleManagement } from './pages/admin/RoleManagement';
 import { TaxManagement } from './pages/admin/TaxManagement';
 import { CountryManagement } from './pages/admin/CountryManagement';
+import { RegionManagement } from './pages/admin/RegionManagement';
+import { PermissionManagement } from './pages/admin/PermissionManagement';
+import { MapboxManagement } from './pages/admin/MapboxManagement';
+import { SystemSettings } from './pages/admin/SystemSettings'; from './pages/admin/MapboxManagement'; from './pages/admin/CountryManagement';
 import { AuditLogManagement } from './pages/admin/AuditLogManagement';
-import { ReviewManagement } from './pages/admin/ReviewManagement'; from './pages/admin/AuditLogManagement'; from './pages/admin/TaxManagement';
+import { ReviewManagement } from './pages/admin/ReviewManagement';
+import { HotelApprovals } from './pages/admin/HotelApprovals'; from './pages/admin/ReviewManagement'; from './pages/admin/AuditLogManagement'; from './pages/admin/TaxManagement';
 import { CountrySettings } from './components/admin/CountrySettings';
 import { PaymentRegistry } from './components/admin/PaymentRegistry';
 import { BankTemplateConfig } from './components/admin/BankTemplateConfig'; from './components/admin/PaymentRegistry';
@@ -100,8 +105,13 @@ function App() {
               <Route path="/admin/roles" element={<RoleManagement />} />
               <Route path="/admin/tax" element={<TaxManagement />} />
               <Route path="/admin/countries" element={<CountryManagement />} />
+              <Route path="/admin/regions" element={<RegionManagement />} />
+              <Route path="/admin/permissions" element={<PermissionManagement />} />
+              <Route path="/admin/mapbox" element={<MapboxManagement />} />
+              <Route path="/admin/settings" element={<SystemSettings />} />
               <Route path="/admin/audit" element={<AuditLogManagement />} />
               <Route path="/admin/reviews" element={<ReviewManagement />} />
+              <Route path="/admin/approvals" element={<HotelApprovals />} />
             </Routes>
           <ChatWidget />
           </main>

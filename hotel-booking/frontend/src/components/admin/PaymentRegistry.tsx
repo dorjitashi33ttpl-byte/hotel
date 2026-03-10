@@ -2,25 +2,23 @@ import React, { useState } from 'react';
 
 export const PaymentRegistry: React.FC = () => {
   return (
-    <div className="p-8 bg-gray-50 min-h-screen">
-      <h1 className="text-3xl font-extrabold text-gray-900 mb-8">Payment Provider Registry</h1>
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-        {['Stripe', 'Razorpay', 'PayPal', 'Bhutan Bank'].map(provider => (
-          <div key={provider} className="bg-white p-6 rounded-2xl shadow-sm border border-gray-100 hover:shadow-md transition-shadow">
-            <h3 className="text-xl font-bold mb-4">{provider}</h3>
+    <div className="bg-white p-12 rounded-[40px] shadow-2xl border border-gray-100">
+      <h2 className="text-3xl font-black mb-8">Payment Provider Registry</h2>
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
+        {['Stripe', 'Razorpay', 'PayPal', 'Bhutan National Bank'].map(provider => (
+          <div key={provider} className="p-8 border-2 border-gray-50 rounded-3xl hover:border-blue-500 transition-all">
+            <div className="flex justify-between items-center mb-6">
+              <h3 className="text-xl font-bold">{provider}</h3>
+              <div className="w-12 h-6 bg-green-500 rounded-full relative">
+                <div className="absolute right-1 top-1 w-4 h-4 bg-white rounded-full" />
+              </div>
+            </div>
             <div className="space-y-4">
-              <div>
-                <label className="text-xs font-bold text-gray-400 uppercase">Status</label>
-                <div className="flex items-center mt-1">
-                  <div className="w-3 h-3 bg-green-500 rounded-full mr-2" />
-                  <span className="text-sm font-semibold">Active</span>
-                </div>
+              <div className="flex flex-col">
+                <label className="text-[10px] font-black uppercase text-gray-400">Webhook Secret</label>
+                <input type="password" value="••••••••••••••••" className="bg-gray-50 p-3 rounded-xl mt-2 outline-none" readOnly />
               </div>
-              <div>
-                <label className="text-xs font-bold text-gray-400 uppercase">Credentials</label>
-                <p className="text-sm font-mono text-gray-500 mt-1">Encrypted ••••••••••••</p>
-              </div>
-              <button className="w-full bg-gray-900 text-white py-2 rounded-lg text-sm font-bold hover:bg-black">Configure</button>
+              <button className="text-blue-600 font-bold text-sm">Edit Configuration</button>
             </div>
           </div>
         ))}

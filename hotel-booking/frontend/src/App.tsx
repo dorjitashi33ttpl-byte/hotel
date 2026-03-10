@@ -17,6 +17,7 @@ import { BookingFlow } from './pages/BookingFlow';
 import { DigitalCheckIn } from './pages/DigitalCheckIn';
 import { CountrySettings } from './components/admin/CountrySettings';
 import { PaymentRegistry } from './components/admin/PaymentRegistry';
+import { BankTemplateConfig } from './components/admin/BankTemplateConfig'; from './components/admin/PaymentRegistry';
 import { ChatWidget } from './components/common/ChatWidget';
 import { GlobalSearch } from './components/common/GlobalSearch';
 
@@ -85,6 +86,7 @@ function App() {
                 <div className="max-w-7xl mx-auto p-24 space-y-24">
                    <CountrySettings />
                    <PaymentRegistry />
+                   <BankTemplateConfig />
                 </div>
               } />
             </Routes>

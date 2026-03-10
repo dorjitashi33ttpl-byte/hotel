@@ -1,64 +1,8 @@
 ============================= test session starts ==============================
 platform linux -- Python 3.12.3, pytest-9.0.2, pluggy-1.6.0
 rootdir: /app/hotel-booking/backend
-collected 1 item / 5 errors
+collected 1 item
 
-==================================== ERRORS ====================================
-______________ ERROR collecting tests/test_booking_integration.py ______________
-ImportError while importing test module '/app/hotel-booking/backend/tests/test_booking_integration.py'.
-Hint: make sure your test modules/packages have valid Python names.
-Traceback:
-/usr/lib/python3.12/importlib/__init__.py:90: in import_module
-    return _bootstrap._gcd_import(name[level:], package, level)
-           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
-tests/test_booking_integration.py:3: in <module>
-    from app.models.booking import BookingStatus
-E   ModuleNotFoundError: No module named 'app'
-__________________ ERROR collecting tests/test_commission.py ___________________
-ImportError while importing test module '/app/hotel-booking/backend/tests/test_commission.py'.
-Hint: make sure your test modules/packages have valid Python names.
-Traceback:
-/usr/lib/python3.12/importlib/__init__.py:90: in import_module
-    return _bootstrap._gcd_import(name[level:], package, level)
-           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
-tests/test_commission.py:1: in <module>
-    from app.services.commission import commission_service
-E   ModuleNotFoundError: No module named 'app'
-________________ ERROR collecting tests/test_inventory_logic.py ________________
-ImportError while importing test module '/app/hotel-booking/backend/tests/test_inventory_logic.py'.
-Hint: make sure your test modules/packages have valid Python names.
-Traceback:
-/usr/lib/python3.12/importlib/__init__.py:90: in import_module
-    return _bootstrap._gcd_import(name[level:], package, level)
-           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
-tests/test_inventory_logic.py:3: in <module>
-    from app.services.inventory import InventoryService
-E   ModuleNotFoundError: No module named 'app'
-________________ ERROR collecting tests/test_recommendations.py ________________
-ImportError while importing test module '/app/hotel-booking/backend/tests/test_recommendations.py'.
-Hint: make sure your test modules/packages have valid Python names.
-Traceback:
-/usr/lib/python3.12/importlib/__init__.py:90: in import_module
-    return _bootstrap._gcd_import(name[level:], package, level)
-           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
-tests/test_recommendations.py:1: in <module>
-    from app.services.recommendations import recommendation_service
-E   ModuleNotFoundError: No module named 'app'
-___________________ ERROR collecting tests/test_services.py ____________________
-ImportError while importing test module '/app/hotel-booking/backend/tests/test_services.py'.
-Hint: make sure your test modules/packages have valid Python names.
-Traceback:
-/usr/lib/python3.12/importlib/__init__.py:90: in import_module
-    return _bootstrap._gcd_import(name[level:], package, level)
-           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
-tests/test_services.py:1: in <module>
-    from app.services.payment import payment_service
-E   ModuleNotFoundError: No module named 'app'
-=========================== short test summary info ============================
-ERROR tests/test_booking_integration.py
-ERROR tests/test_commission.py
-ERROR tests/test_inventory_logic.py
-ERROR tests/test_recommendations.py
-ERROR tests/test_services.py
-!!!!!!!!!!!!!!!!!!! Interrupted: 5 errors during collection !!!!!!!!!!!!!!!!!!!!
-============================== 5 errors in 0.16s ===============================
+tests/test_inventory.py .                                                [100%]
+
+============================== 1 passed in 0.01s ===============================

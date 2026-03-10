@@ -8,6 +8,8 @@ import { HoldActivityFeed } from '../components/tenant/HoldActivityFeed';
 import { WalkInBookingForm } from '../components/tenant/WalkInBookingForm';
 import { PayoutManagement } from '../components/tenant/PayoutManagement';
 import { AvailabilityCalendar } from '../components/tenant/AvailabilityCalendar';
+import { HousekeepingDashboard } from '../components/tenant/HousekeepingDashboard';
+import { RoomRack } from '../components/tenant/RoomRack';
 
 export const TenantDashboard: React.FC = () => {
   return (
@@ -28,9 +30,11 @@ export const TenantDashboard: React.FC = () => {
         </header>
 
         <AvailabilityCalendar />
+        <RoomRack />
 
         <div className="grid grid-cols-1 lg:grid-cols-12 gap-16">
           <div className="lg:col-span-8 space-y-16">
+            <HousekeepingDashboard />
             <div className="bg-white p-12 shadow-sm border border-stone-100">
                <h3 className="text-2xl font-serif mb-12 border-b border-stone-50 pb-6">Operations</h3>
                <div className="space-y-16">

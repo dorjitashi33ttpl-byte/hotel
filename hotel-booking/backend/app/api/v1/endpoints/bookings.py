@@ -1,17 +1,33 @@
-from fastapi import APIRouter, Depends, HTTPException, Request
+from fastapi import APIRouter, Depends, HTTPException, Query
 from sqlalchemy.orm import Session
 from app.api.deps import get_db, get_current_user
-from app.models.user import User
-from app.services.fraud import fraud_check_service
+from app.models.booking import Booking
+from app.services.booking import booking_service
+from app.services.checkin import checkin_service
+from datetime import date
 
 router = APIRouter()
 
 @router.post("/holds")
-async def create_hold(request: Request, db: Session = Depends(get_db), current_user: User = Depends(get_current_user)):
-    # Run Fraud Check
-    fraud = await fraud_check_service.run_check(current_user, request.client.host)
-    if fraud["is_blocked"]:
-        raise HTTPException(403, detail=f"Booking hold rejected: {', '.join(fraud['reasons'])}")
+async def create_hold(
+    room_type_id: int,
+    start_date: date,
+    end_date: date,
+    db: Session = Depends(get_db),
+    current_user = Depends(get_current_user)
+):
+    hold = await booking_service.create_hold(db, room_type_id, start_date, end_date, current_user.id)
+    if not hold: raise HTTPException(409, "Inventory unavailable for these dates")
+    return hold
 
-    # Rest of hold logic...
-    return {"status": "hold_created", "expiry_minutes": 15}
+@router.post("/{booking_id}/checkin")
+async def guest_checkin(
+    booking_id: int,
+    db: Session = Depends(get_db),
+    current_user = Depends(get_current_user)
+):
+    booking = db.query(Booking).filter(Booking.id == booking_id).first()
+    if not booking: raise HTTPException(404, "Booking not found")
+
+    key_url = await checkin_service.generate_digital_key(booking)
+    return {"status": "checked_in", "digital_key_url": key_url}

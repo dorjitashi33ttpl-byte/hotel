@@ -1,143 +1,48 @@
-import React, { useState, useEffect } from 'react';
-import { BrowserRouter, Routes, Route, Link } from 'react-router-dom';
+import React from 'react';
+import { BrowserRouter, Routes, Route } from 'react-router-dom';
 import { QueryClient, QueryClientProvider } from 'react-query';
-import { ParallaxHero } from './components/landing/ParallaxHero';
-import { AvailabilityBar } from './components/landing/AvailabilityBar';
-import { PropertyStory } from './components/landing/PropertyStory';
-import { SuitesPage } from './pages/SuitesPage';
-import { DiningPage } from './pages/DiningPage';
-import { WellnessPage } from './pages/WellnessPage';
-import { ExclusiveOffers } from './components/landing/ExclusiveOffers';
-import { LuxuryGallery } from './components/landing/LuxuryGallery';
-import { SuitesDining } from './components/landing/SuitesDining';
-import { Wellness } from './components/landing/Wellness';
+import { Hero } from './components/landing/Hero';
+import { Navbar } from './components/common/Navbar';
+import { FadeIn } from './components/common/FadeIn';
 import { TenantDashboard } from './pages/TenantDashboard';
-import HotelDetail from './pages/HotelDetail';
 import { BookingFlow } from './pages/BookingFlow';
-import { DigitalCheckIn } from './pages/DigitalCheckIn';
-import { AdminDashboard } from './pages/admin/AdminDashboard';
-import { UserManagement } from './pages/admin/UserManagement';
-import { RoleManagement } from './pages/admin/RoleManagement';
-import { TaxManagement } from './pages/admin/TaxManagement';
-import { CountryManagement } from './pages/admin/CountryManagement';
-import { RegionManagement } from './pages/admin/RegionManagement';
-import { PermissionManagement } from './pages/admin/PermissionManagement';
-import { MapboxManagement } from './pages/admin/MapboxManagement';
-import { SystemSettings } from './pages/admin/SystemSettings'; from './pages/admin/MapboxManagement'; from './pages/admin/CountryManagement';
-import { AuditLogManagement } from './pages/admin/AuditLogManagement';
-import { ReviewManagement } from './pages/admin/ReviewManagement';
-import { HotelApprovals } from './pages/admin/HotelApprovals'; from './pages/admin/ReviewManagement'; from './pages/admin/AuditLogManagement'; from './pages/admin/TaxManagement';
-import { CountrySettings } from './components/admin/CountrySettings';
-import { PaymentRegistry } from './components/admin/PaymentRegistry';
-import { BankTemplateConfig } from './components/admin/BankTemplateConfig'; from './components/admin/PaymentRegistry';
-import { ChatWidget } from './components/common/ChatWidget';
-import { GlobalSearch } from './components/common/GlobalSearch';
 
 const queryClient = new QueryClient();
 
-const Navbar = () => {
-  const [scrolled, setScrolled] = useState(false);
-
-  useEffect(() => {
-    const handleScroll = () => setScrolled(window.scrollY > 50);
-    window.addEventListener('scroll', handleScroll);
-    return () => window.removeEventListener('scroll', handleScroll);
-  }, []);
-
+function Landing() {
   return (
-    <nav className={`luxury-nav ${scrolled ? 'scrolled bg-white/90' : 'bg-transparent text-white border-transparent'}`}>
-      <div className="flex items-center gap-16">
-        <Link to="/" className="font-serif text-2xl font-bold tracking-tighter transition-transform hover:scale-105">
-          AMAN <span className="text-[10px] tracking-[0.4em] font-sans font-normal opacity-70 ml-2">BHUTAN</span>
-        </Link>
-        <div className="hidden items-center gap-8 text-[11px] font-bold uppercase tracking-[0.2em] md:flex">
-          <Link to="/" className="hover:opacity-50 transition-opacity">Experience</Link>
-          <Link to="/" className="hover:opacity-50 transition-opacity">Suites</Link>
-          <Link to="/" className="hover:opacity-50 transition-opacity">Wellness</Link>
-          <Link to="/" className="hover:opacity-50 transition-opacity">Dining</Link>
-        </div>
-      </div>
-      <div className="flex items-center gap-8 text-[11px] font-bold uppercase tracking-[0.2em]">
-        <GlobalSearch />
-        <Link to="/tenant" className="hover:opacity-50 transition-opacity">Owner Portal</Link>
-        <Link to="/admin" className="hover:opacity-50 transition-opacity">Admin</Link>
-        <button className="bg-stone-900 text-stone-50 px-6 py-2.5 hover:bg-stone-800 transition-colors">Book Now</button>
-      </div>
-    </nav>
+    <div className="bg-[var(--luxury-stone)] min-h-screen">
+      <Hero />
+      <section className="py-48 px-12 max-w-7xl mx-auto grid grid-cols-1 lg:grid-cols-2 gap-32 items-center">
+        <FadeIn>
+           <span className="text-[10px] font-bold uppercase tracking-[0.5em] text-[var(--luxury-gold)] block mb-10">Our Story</span>
+           <h2 className="text-6xl font-serif tracking-tighter leading-tight mb-12">A sanctuary designed for those who seek <span className="italic">the sublime</span>.</h2>
+           <p className="text-xl text-stone-500 font-light leading-relaxed max-w-xl">
+             Nestled within the high Himalayan valleys, our properties are a tribute to Bhutanese craftsmanship and the philosophy of Gross National Happiness. We invite you to experience a journey that transcends ordinary travel.
+           </p>
+        </FadeIn>
+        <FadeIn delay={0.3}>
+           <div className="relative aspect-[4/5] bg-stone-200 overflow-hidden gold-border shadow-2xl">
+              <img src="https://images.unsplash.com/photo-1590073242678-70ee3fc28e8e?w=1000" className="w-full h-full object-cover grayscale transition-all duration-1000 hover:grayscale-0 hover:scale-105" />
+           </div>
+        </FadeIn>
+      </section>
+    </div>
   );
-};
+}
 
 function App() {
   return (
     <QueryClientProvider client={queryClient}>
       <BrowserRouter>
-        <div className="min-h-screen flex flex-col antialiased bg-stone-50">
-          <Navbar />
-          <main className="flex-1">
-            <Routes>
-              <Route path="/" element={
-                <>
-                  <ParallaxHero />
-                  <AvailabilityBar />
-                  <PropertyStory />
-                  <SuitesDining />
-                  <Wellness />
-                  <LuxuryGallery />
-                  <ExclusiveOffers />
-                </>
-              } />
-              <Route path="/suites" element={<SuitesPage />} />
-              <Route path="/dining" element={<DiningPage />} />
-              <Route path="/wellness" element={<WellnessPage />} />
-              <Route path="/hotel/:id" element={<HotelDetail />} />
-              <Route path="/search" element={<div className="p-24 font-serif text-4xl text-center">Curating your experience...</div>} />
-              <Route path="/hotel/:id/book" element={<BookingFlow hotelId={1} roomTypeId={1} />} />
-              <Route path="/checkin/:bid" element={<DigitalCheckIn />} />
-              <Route path="/tenant/*" element={<TenantDashboard />} />
-                <div className="max-w-7xl mx-auto p-24 space-y-24">
-                   <CountrySettings />
-                   <PaymentRegistry />
-                   <BankTemplateConfig />
-                </div>
-              } />
-              <Route path="/admin" element={<AdminDashboard />} />
-              <Route path="/admin/users" element={<UserManagement />} />
-              <Route path="/admin/roles" element={<RoleManagement />} />
-              <Route path="/admin/tax" element={<TaxManagement />} />
-              <Route path="/admin/countries" element={<CountryManagement />} />
-              <Route path="/admin/regions" element={<RegionManagement />} />
-              <Route path="/admin/permissions" element={<PermissionManagement />} />
-              <Route path="/admin/mapbox" element={<MapboxManagement />} />
-              <Route path="/admin/settings" element={<SystemSettings />} />
-              <Route path="/admin/audit" element={<AuditLogManagement />} />
-              <Route path="/admin/reviews" element={<ReviewManagement />} />
-              <Route path="/admin/approvals" element={<HotelApprovals />} />
-            </Routes>
-          <ChatWidget />
-          </main>
-          <footer className="bg-stone-900 px-24 py-16 text-stone-400">
-             <div className="flex justify-between items-start border-b border-stone-800 pb-12">
-                <div className="font-serif text-2xl text-stone-50">AMAN</div>
-                <div className="flex gap-16 text-[10px] uppercase tracking-widest font-bold">
-                   <div className="flex flex-col gap-4">
-                      <span className="text-stone-600">Explore</span>
-                      <a href="#" className="hover:text-stone-50 transition-colors">Destinations</a>
-                      <a href="#" className="hover:text-stone-50 transition-colors">Private Jets</a>
-                      <a href="#" className="hover:text-stone-50 transition-colors">Residences</a>
-                   </div>
-                   <div className="flex flex-col gap-4">
-                      <span className="text-stone-600">Company</span>
-                      <a href="#" className="hover:text-stone-50 transition-colors">Sustainability</a>
-                      <a href="#" className="hover:text-stone-50 transition-colors">Careers</a>
-                      <a href="#" className="hover:text-stone-50 transition-colors">Press</a>
-                   </div>
-                </div>
-             </div>
-             <div className="mt-8 text-[10px] tracking-widest uppercase">
-                &copy; 2026 AMAN GROUP S.A. ALL RIGHTS RESERVED.
-             </div>
-          </footer>
-        </div>
+        <Navbar />
+        <main className="flex-1">
+          <Routes>
+            <Route path="/" element={<Landing />} />
+            <Route path="/tenant/*" element={<TenantDashboard />} />
+            <Route path="/hotel/:id/book" element={<BookingFlow hotelId={1} roomTypeId={1} />} />
+          </Routes>
+        </main>
       </BrowserRouter>
     </QueryClientProvider>
   );

@@ -1,21 +1,15 @@
-from typing import Dict, Any
-
 class CurrencyService:
-    def __init__(self):
-        # Mock exchange rates relative to USD
-        self._rates = {
-            "USD": 1.0,
-            "BTN": 83.0,
-            "INR": 83.0,
-            "THB": 35.0
-        }
+    # Exchange rates seeded from Bhutan Central Bank (mock)
+    RATES = {
+        "BTN": 1.0,
+        "USD": 0.012,
+        "INR": 1.0
+    }
 
-    def convert(self, amount: float, from_curr: str, to_curr: str) -> float:
-        if from_curr == to_curr:
-            return amount
-
-        # Convert to base (USD) then to target
-        usd_amount = amount / self._rates[from_curr]
-        return usd_amount * self._rates[to_curr]
+    @staticmethod
+    def convert(amount: float, from_cur: str, to_cur: str) -> float:
+        if from_cur == to_cur: return amount
+        base = amount / CurrencyService.RATES.get(from_cur, 1.0)
+        return base * CurrencyService.RATES.get(to_cur, 1.0)
 
 currency_service = CurrencyService()

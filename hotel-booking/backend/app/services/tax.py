@@ -1,38 +1,17 @@
-from typing import Dict, Any, List
-
-class TaxRule:
-    def __init__(self, id: int, country: str, region: str, rate: float, name: str, inclusive: bool = False):
-        self.id = id
-        self.country = country
-        self.region = region
-        self.rate = rate
-        self.name = name
-        self.inclusive = inclusive
+from typing import Dict
+from app.models.geo import Country, Region
 
 class TaxService:
-    def __init__(self):
-        self._rules = [
-            TaxRule(1, "BT", "Global", 0.05, "SDF (Sustainable Dev Fee)", inclusive=False),
-            TaxRule(2, "BT", "Global", 0.05, "Sales Tax", inclusive=False)
-        ]
+    @staticmethod
+    def calculate_taxes(base_amount: float, country: Country, region: Region = None) -> Dict[str, float]:
+        # SDF (Sustainable Development Fee) logic for Bhutan
+        if country.iso_code == "BT":
+            sdf = 100.0 # BTN 100 per night per person (mock)
+            sales_tax = base_amount * 0.10 # 10%
+            return {"SDF": sdf, "Sales Tax": sales_tax, "total": sdf + sales_tax}
 
-    def calculate_total_with_tax(self, amount: float, country: str, region: str = "Global") -> Dict[str, Any]:
-        applicable = [r for r in self._rules if r.country == country and r.region in [region, "Global"]]
-
-        exclusive_rate = sum(r.rate for r in applicable if not r.inclusive)
-        inclusive_rate = sum(r.rate for r in applicable if r.inclusive)
-
-        # Exclusive: total = amount * (1 + rate)
-        # Inclusive: total = amount (tax is already inside)
-
-        tax_from_exclusive = amount * exclusive_rate
-        total = amount + tax_from_exclusive
-
-        return {
-            "base_amount": amount,
-            "exclusive_tax": tax_from_exclusive,
-            "total_with_tax": total,
-            "currency": "BTN"
-        }
+        # Default global logic
+        global_tax = base_amount * 0.05
+        return {"Global Tax": global_tax, "total": global_tax}
 
 tax_service = TaxService()

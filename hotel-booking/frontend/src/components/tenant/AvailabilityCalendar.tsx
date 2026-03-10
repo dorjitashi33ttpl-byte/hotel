@@ -1,35 +1,45 @@
 import React from 'react';
 
-export const AvailabilityCalendar: React.FC = () => {
+export const AvailabilityCalendar = () => {
+  const days = Array.from({ length: 14 }, (_, i) => i + 1);
+  const rooms = ["101 - Deluxe", "102 - Deluxe", "201 - Heritage", "202 - Heritage"];
+
   return (
-    <div className="p-8 bg-white shadow-xl rounded-3xl border border-gray-100 overflow-hidden">
+    <div className="bg-white p-12 border border-stone-100 shadow-sm rounded-3xl overflow-hidden">
       <div className="flex justify-between items-center mb-10">
-        <h2 className="text-2xl font-black text-gray-900 tracking-tight">Availability Matrix</h2>
-        <div className="flex gap-4">
-           <button className="px-4 py-2 border rounded-xl font-bold text-sm bg-gray-50 hover:bg-white transition-all shadow-sm">Previous</button>
-           <button className="px-4 py-2 border rounded-xl font-bold text-sm bg-gray-50 hover:bg-white transition-all shadow-sm">Next</button>
-        </div>
+         <h3 className="text-2xl font-serif">Sanctuary Occupancy</h3>
+         <div className="flex gap-4">
+            <span className="flex items-center gap-2 text-[10px] font-bold uppercase text-stone-400"><div className="w-2 h-2 bg-stone-900 rounded-full" /> Occupied</span>
+            <span className="flex items-center gap-2 text-[10px] font-bold uppercase text-stone-400"><div className="w-2 h-2 bg-stone-100 rounded-full" /> Available</span>
+         </div>
       </div>
 
-      <div className="grid grid-cols-8 border rounded-2xl overflow-hidden shadow-sm">
-        <div className="bg-gray-50 border-r p-4 font-black uppercase text-[10px] text-gray-400">Room Type</div>
-        {[...Array(7)].map((_, i) => (
-          <div key={i} className="bg-gray-50 border-r p-4 text-center font-black text-sm text-gray-700">Jun {10 + i}</div>
-        ))}
-
-        <div className="border-t border-r p-6 font-bold text-sm">Deluxe Heritage</div>
-        {[...Array(7)].map((_, i) => (
-          <div key={i} className={`border-t border-r p-6 flex items-center justify-center ${i % 3 === 0 ? 'bg-red-50 text-red-600 font-black' : 'bg-green-50 text-green-600 font-bold'}`}>
-            {i % 3 === 0 ? '0' : '8'}
-          </div>
-        ))}
-
-        <div className="border-t border-r p-6 font-bold text-sm">Royal Suite</div>
-        {[...Array(7)].map((_, i) => (
-          <div key={i} className={`border-t border-r p-6 flex items-center justify-center ${i === 2 ? 'bg-orange-50 text-orange-600 font-black' : 'bg-green-50 text-green-600 font-bold'}`}>
-            {i === 2 ? '1' : '2'}
-          </div>
-        ))}
+      <div className="overflow-x-auto">
+        <table className="w-full border-collapse">
+          <thead>
+            <tr>
+              <th className="p-4 border-b border-stone-100 text-left text-[10px] font-black uppercase text-stone-300">Room</th>
+              {days.map(d => (
+                <th key={d} className="p-4 border-b border-stone-100 text-[10px] font-black uppercase text-stone-300">Jun {d}</th>
+              ))}
+            </tr>
+          </thead>
+          <tbody>
+            {rooms.map(room => (
+              <tr key={room} className="hover:bg-stone-50/50 transition-colors">
+                <td className="p-4 border-b border-stone-50 text-[11px] font-bold text-stone-900 whitespace-nowrap">{room}</td>
+                {days.map(d => {
+                  const isOccupied = Math.random() > 0.7;
+                  return (
+                    <td key={d} className="p-2 border-b border-stone-50">
+                       <div className={`h-10 rounded-lg transition-all ${isOccupied ? 'bg-stone-900' : 'bg-stone-50 group-hover:bg-stone-100'}`} />
+                    </td>
+                  );
+                })}
+              </tr>
+            ))}
+          </tbody>
+        </table>
       </div>
     </div>
   );

@@ -1,8 +1,26 @@
 ============================= test session starts ==============================
 platform linux -- Python 3.12.3, pytest-9.0.2, pluggy-1.6.0
 rootdir: /app/hotel-booking/backend
-collected 1 item
+collected 0 items / 1 error
 
-tests/test_inventory.py .                                                [100%]
-
-============================== 1 passed in 0.01s ===============================
+==================================== ERRORS ====================================
+___________________ ERROR collecting tests/test_payments.py ____________________
+ImportError while importing test module '/app/hotel-booking/backend/tests/test_payments.py'.
+Hint: make sure your test modules/packages have valid Python names.
+Traceback:
+/usr/lib/python3.12/importlib/__init__.py:90: in import_module
+    return _bootstrap._gcd_import(name[level:], package, level)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+tests/test_payments.py:2: in <module>
+    from app.services.payments import payment_orchestrator, LocalBankAdapter
+app/services/payments.py:3: in <module>
+    from app.models.payment import PaymentProvider, PaymentStatus
+app/models/__init__.py:1: in <module>
+    from .base import Base
+app/models/base.py:3: in <module>
+    from sqlalchemy.ext.declarative import as_declarative, declared_attr
+E   ModuleNotFoundError: No module named 'sqlalchemy'
+=========================== short test summary info ============================
+ERROR tests/test_payments.py
+!!!!!!!!!!!!!!!!!!!! Interrupted: 1 error during collection !!!!!!!!!!!!!!!!!!!!
+=============================== 1 error in 0.22s ===============================

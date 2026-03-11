@@ -7,6 +7,7 @@ from prometheus_client import make_asgi_app
 from app.core.config import settings
 from app.core.logging import setup_logging
 from app.core.rate_limit import rate_limit_middleware
+from app.core.security_headers import SecurityHeadersMiddleware
 from app.api.v1.endpoints import (
     public, admin, tenant, partner, checkin, walkin, calendar, chat, auth, ws
 )
@@ -40,6 +41,8 @@ async def global_exception_handler(request: Request, exc: Exception):
     )
 
 if settings.BACKEND_CORS_ORIGINS:
+app.add_middleware(SecurityHeadersMiddleware)
+
     app.add_middleware(
         CORSMiddleware,
         allow_origins=[str(origin) for origin in settings.BACKEND_CORS_ORIGINS],

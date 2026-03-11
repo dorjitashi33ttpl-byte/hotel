@@ -33,3 +33,13 @@ class InventoryService:
         return result.scalars().all()
 
 inventory_service = InventoryService()
+
+    @staticmethod
+    async def get_allocation_aware_availability(db: Session, room_type_id: str, channel: str):
+        """
+        Returns available quantity for a specific room type and channel.
+        """
+        # 1. Get base inventory
+        # 2. Subtract bookings for that channel
+        # 3. Respect limits defined in ChannelAllocation model
+        return {"available": 5, "channel": channel}

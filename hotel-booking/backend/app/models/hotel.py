@@ -85,3 +85,21 @@ class ShiftAssignment(Base):
     end_time = Column(DateTime, nullable=False)
     handover_notes = Column(String)
     created_at = Column(DateTime, default=func.now())
+
+class ChannelAllocation(Base):
+    __tablename__ = "channel_allocations"
+    id = Column(String, primary_key=True)
+    room_type_id = Column(String, ForeignKey("room_types.id"))
+    channel = Column(String) # DIRECT, PARTNER, OTA
+    allocated_quantity = Column(Integer, default=0)
+
+class Review(Base):
+    __tablename__ = "reviews"
+    id = Column(String, primary_key=True)
+    hotel_id = Column(String, ForeignKey("hotels.id"))
+    booking_id = Column(String, ForeignKey("bookings.id"), unique=True)
+    user_id = Column(String)
+    rating = Column(Integer, nullable=False) # 1-5
+    comment = Column(String)
+    is_verified = Column(Boolean, default=False)
+    created_at = Column(DateTime, default=func.now())

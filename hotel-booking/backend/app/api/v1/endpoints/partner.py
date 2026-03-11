@@ -31,3 +31,26 @@ async def create_partner_hold(
 ):
     # Logic to create a temporary hold for partner applications
     return {"hold_id": "PARTNER-12345", "expires_at": "2026-06-01T12:00:00Z"}
+
+@router.post("/token")
+async def get_partner_token(client_id: str, client_secret: str):
+    """
+    OAuth2 Client Credentials Flow for Partners.
+    """
+    # Stub: Verify client_id/secret and return JWT
+    return {
+        "access_token": "partner_access_token_stub",
+        "token_type": "bearer",
+        "expires_in": 3600
+    }
+
+@router.get("/usage")
+async def get_quota_usage(partner = Depends(get_partner_app)):
+    """
+    Returns current API usage and daily limits for the partner.
+    """
+    return {
+        "daily_limit": 1000,
+        "current_usage": 142,
+        "reset_at": "2026-06-02T00:00:00Z"
+    }

@@ -5,6 +5,7 @@ import { createBottomTabNavigator } from '@react-navigation/bottom-tabs';
 import { QueryClientProvider } from 'react-query';
 import { SafeAreaProvider } from 'react-native-safe-area-context';
 import { queryClient } from './src/services/api';
+import { linking } from './src/config/linking';
 import { useNotifications } from './src/hooks/useNotifications';
 import { NotificationBanner } from './src/components/common/NotificationBanner';
 
@@ -41,7 +42,7 @@ function NavigationRoot() {
   useNotifications();
 
   return (
-    <NavigationContainer>
+    <NavigationContainer linking={linking}>
       <NotificationBanner
         visible={banner.visible}
         message={banner.message}

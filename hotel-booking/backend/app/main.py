@@ -6,7 +6,7 @@ from prometheus_client import make_asgi_app
 from app.core.config import settings
 from app.core.logging import setup_logging
 from app.api.v1.endpoints import (
-    public, admin, tenant, partner, checkin, walkin, calendar, chat, auth
+    public, admin, tenant, partner, checkin, walkin, calendar, chat, auth, ws
 )
 
 setup_logging()
@@ -54,6 +54,7 @@ app.include_router(checkin.router, prefix=f"{settings.API_V1_STR}/checkin", tags
 app.include_router(walkin.router, prefix=f"{settings.API_V1_STR}/walkin", tags=["walkin"])
 app.include_router(calendar.router, prefix=f"{settings.API_V1_STR}/calendar", tags=["calendar"])
 app.include_router(chat.router, prefix=f"{settings.API_V1_STR}/chat", tags=["chat"])
+app.include_router(ws.router, prefix=f"{settings.API_V1_STR}/ws", tags=["ws"])
 
 @app.get("/")
 async def root():

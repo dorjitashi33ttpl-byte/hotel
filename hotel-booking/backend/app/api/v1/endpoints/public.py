@@ -29,3 +29,23 @@ async def get_saved_hotels(user_id: str, db: AsyncSession = Depends(get_db)):
     stmt = select(Hotel).join(SavedHotel, SavedHotel.hotel_id == Hotel.id).where(SavedHotel.user_id == user_id)
     result = await db.execute(stmt)
     return result.scalars().all()
+
+from app.services.notifications import verify_menu_signature
+from fastapi.responses import FileResponse
+
+@router.get("/hotels/{id}/menu/download")
+async def download_menu(
+    id: str,
+    path: str,
+    expires: int,
+    signature: str
+):
+    """
+    Downloads a property menu PDF if the signed URL is valid.
+    """
+    if not verify_menu_signature(path, expires, signature):
+        raise HTTPException(status_code=403, detail="Invalid or expired signature")
+
+    # In production, path would be resolved to an S3 bucket or local secure path
+    # For now, we return a mock response or check file existence
+    return {"message": f"Successfully verified access to {path} for hotel {id}"}

@@ -72,3 +72,32 @@ def sso_google(token: str, db: Session = Depends(deps.get_db)):
 @router.post("/sso/apple")
 def sso_apple(token: str, db: Session = Depends(deps.get_db)):
     return {"access_token": "mock_apple", "token_type": "bearer"}
+
+@router.get("/druk-id/login")
+async def drukid_login():
+    """
+    Redirects user to DrukID SSO portal (Bhutan National Identity)
+    """
+    return {
+        "sso_url": "https://sso.drukid.bt/auth?client_id=hotel_saas&redirect_uri=https://api.hotel-booking.bt/v1/auth/druk-id/callback",
+        "message": "Redirecting to DrukID..."
+    }
+
+@router.post("/druk-id/callback")
+async def drukid_callback(code: str):
+    """
+    Callback from DrukID after successful authentication.
+    Exchanges code for user identity and issues a platform JWT.
+    """
+    # Stub: Verify code with DrukID API
+    # identity = await drukid_service.verify_code(code)
+
+    return {
+        "access_token": "stub_jwt_from_drukid_identity",
+        "token_type": "bearer",
+        "user": {
+            "full_name": "Tashi Dorji",
+            "cid": "1141000xxxx",
+            "is_verified": True
+        }
+    }

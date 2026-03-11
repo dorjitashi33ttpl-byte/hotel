@@ -1,3 +1,4 @@
+from sqlalchemy import func
 import time
 from fastapi import FastAPI, Request, status
 from fastapi.middleware.cors import CORSMiddleware
@@ -5,6 +6,7 @@ from fastapi.responses import JSONResponse
 from prometheus_client import make_asgi_app
 from app.core.config import settings
 from app.core.logging import setup_logging
+from app.core.rate_limit import rate_limit_middleware
 from app.api.v1.endpoints import (
     public, admin, tenant, partner, checkin, walkin, calendar, chat, auth, ws
 )
@@ -17,6 +19,10 @@ app = FastAPI(
 )
 
 # Global Performance Middleware
+@app.middleware("http")
+async def rate_limit_wrapper(request: Request, call_next):
+    return await rate_limit_middleware(request, call_next)
+
 @app.middleware("http")
 async def add_process_time_header(request: Request, call_next):
     start_time = time.time()
@@ -59,3 +65,40 @@ app.include_router(ws.router, prefix=f"{settings.API_V1_STR}/ws", tags=["ws"])
 @app.get("/")
 async def root():
     return {"message": "Welcome to Hotel Booking SaaS API"}
+
+from app.core.database import engine
+import redis.asyncio as redis
+
+@app.get("/health")
+async def health_check():
+    health = {"status": "healthy", "checks": {}}
+
+    # Check DB
+    try:
+        async with engine.connect() as conn:
+            await conn.execute(func.now())
+        health["checks"]["database"] = "up"
+    except Exception:
+        health["checks"]["database"] = "down"
+        health["status"] = "unhealthy"
+
+    # Check Redis
+    try:
+        r = redis.from_url(settings.REDIS_URL)
+        await r.ping()
+        health["checks"]["redis"] = "up"
+    except Exception:
+        health["checks"]["redis"] = "down"
+        health["status"] = "unhealthy"
+
+    return health
+
+# Observability Stubs (Production Only)
+if settings.SENTRY_DSN:
+    # import sentry_sdk
+    # sentry_sdk.init(dsn=settings.SENTRY_DSN, traces_sample_rate=1.0)
+    pass
+
+# OpenTelemetry Middleware Placeholder
+# from opentelemetry.instrumentation.fastapi import FastAPIInstrumentor
+# FastAPIInstrumentor.instrument_app(app)

@@ -1,42 +1,27 @@
 import { useState } from 'react';
 import { Alert, Platform } from 'react-native';
 
-/**
- * Hook to manage biometric state and logic
- * Stubs for FaceID / Fingerprint logic
- */
 export const useBiometrics = () => {
-  const [isEnabled, setEnabled] = useState(false);
+  const [isEnabled, setIsEnabled] = useState(false);
 
-  const setIsEnabled = async (value: boolean) => {
-    if (value) {
-      // Stub for checking hardware availability
-      const hasHardware = true;
-      const isEnrolled = true;
+  const authenticate = async () => {
+    if (Platform.OS === 'web') return true;
 
-      if (!hasHardware) {
-         Alert.alert('Error', 'Your device does not support biometrics.');
-         return;
-      }
+    return new Promise((resolve) => {
+      console.log('[Biometric Stub] Requesting FaceID/Fingerprint...');
+      // In a real app:
+      // const result = await LocalAuthentication.authenticateAsync();
 
-      if (!isEnrolled) {
-         Alert.alert('Setup Required', 'Please set up biometrics in your device settings first.');
-         return;
-      }
-
-      // Stub for authentication
       Alert.alert(
-        'Enable Biometrics',
-        `Confirm that you want to enable ${Platform.OS === 'ios' ? 'FaceID' : 'Biometric'} for secure login.`,
+        "Biometric Identity",
+        "Confirm your identity using FaceID or Fingerprint to proceed.",
         [
-          { text: 'Cancel', style: 'cancel', onPress: () => setEnabled(false) },
-          { text: 'Confirm', onPress: () => setEnabled(true) }
+          { text: "Cancel", onPress: () => resolve(false), style: "cancel" },
+          { text: "Authenticate", onPress: () => resolve(true) }
         ]
       );
-    } else {
-      setEnabled(false);
-    }
+    });
   };
 
-  return { isEnabled, setIsEnabled };
+  return { isEnabled, setIsEnabled, authenticate };
 };

@@ -25,3 +25,16 @@ class MediaAttachment(Base):
     file_size = Column(Integer)
     entity_type = Column(String) # hotel_image, menu_pdf, guest_id
     entity_id = Column(Integer)
+
+class AuditLog(Base):
+    __tablename__ = "audit_logs"
+    id = Column(String, primary_key=True)
+    tenant_id = Column(String, index=True)
+    user_id = Column(String, index=True)
+    action = Column(String, nullable=False)
+    resource_type = Column(String)
+    resource_id = Column(String)
+    old_value = Column(JSON)
+    new_value = Column(JSON)
+    ip_address = Column(String)
+    timestamp = Column(DateTime, default=func.now())

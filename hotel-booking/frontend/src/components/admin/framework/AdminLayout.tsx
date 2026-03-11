@@ -3,7 +3,8 @@ import { Link, useLocation } from 'react-router-dom';
 import {
   Users, Shield, Lock, Settings, Percent, Database,
   Activity, LayoutDashboard, ChevronDown, Menu, X,
-  FileText, CreditCard, Map, Building, Star, CheckSquare
+  FileText, CreditCard, Map, Building, Star, CheckSquare,
+  ChevronRight
 } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 
@@ -53,17 +54,83 @@ const navGroups = [
   }
 ];
 
+const NavGroup = ({ group, isSidebarOpen, location }: any) => {
+  const [isOpen, setIsOpen] = useState(true);
+  const isActive = group.items.some((item: any) => location.pathname.startsWith(item.path));
+
+  return (
+    <div className="space-y-2">
+      {isSidebarOpen && (
+        <button
+          onClick={() => setIsOpen(!isOpen)}
+          className="w-full flex items-center justify-between px-4 py-2 text-[9px] font-black uppercase tracking-[0.4em] text-stone-300 hover:text-stone-900 transition-colors"
+        >
+          <span>{group.title}</span>
+          <ChevronDown className={`w-3 h-3 transition-transform ${isOpen ? '' : '-rotate-90'}`} />
+        </button>
+      )}
+      <AnimatePresence initial={false}>
+        {isOpen && (
+          <motion.div
+            initial={{ height: 0, opacity: 0 }}
+            animate={{ height: 'auto', opacity: 1 }}
+            exit={{ height: 0, opacity: 0 }}
+            className="overflow-hidden space-y-1"
+          >
+            {group.items.map((item: any) => (
+              <Link
+                key={item.name}
+                to={item.path}
+                className={`flex items-center gap-4 p-4 rounded-xl transition-all ${location.pathname.startsWith(item.path) ? 'bg-stone-50 text-gold shadow-sm border border-stone-100' : 'text-stone-500 hover:bg-stone-50'}`}
+              >
+                {item.icon}
+                {isSidebarOpen && <span className="font-bold text-[10px] tracking-widest uppercase">{item.name}</span>}
+              </Link>
+            ))}
+          </motion.div>
+        )}
+      </AnimatePresence>
+    </div>
+  );
+};
+
 export const AdminLayout: React.FC<{ children: React.ReactNode }> = ({ children }) => {
   const [isSidebarOpen, setSidebarOpen] = useState(true);
+  const [toasts, setToasts] = useState<any[]>([]);
   const location = useLocation();
+
+  const addToast = (message: string, type: 'success' | 'error' = 'success') => {
+    const id = Date.now();
+    setToasts(prev => [...prev, { id, message, type }]);
+    setTimeout(() => setToasts(prev => prev.filter(t => t.id !== id)), 5000);
+  };
 
   return (
     <div className="flex min-h-screen bg-stone-50 font-sans antialiased">
+      {/* Toast Notification Container */}
+      <div className="fixed top-8 right-8 z-[300] space-y-4">
+        <AnimatePresence>
+          {toasts.map(t => (
+            <motion.div
+              key={t.id}
+              initial={{ opacity: 0, x: 20 }}
+              animate={{ opacity: 1, x: 0 }}
+              exit={{ opacity: 0, scale: 0.95 }}
+              className={`px-8 py-4 shadow-2xl border border-stone-100 font-bold text-xs uppercase tracking-widest flex items-center gap-4 ${t.type === 'success' ? 'bg-stone-900 text-white' : 'bg-red-600 text-white'}`}
+            >
+              {t.type === 'success' ? <CheckSquare className="w-4 h-4 text-gold" /> : <X className="w-4 h-4" />}
+              {t.message}
+            </motion.div>
+          ))}
+        </AnimatePresence>
+      </div>
+
+      {/* Sidebar */}
       <aside className={`bg-white border-r border-stone-200 transition-all duration-500 ease-in-out ${isSidebarOpen ? 'w-80' : 'w-20'}`}>
         <div className="p-8 flex items-center justify-between border-b border-stone-100">
            {isSidebarOpen && (
              <motion.span initial={{ opacity: 0 }} animate={{ opacity: 1 }} className="font-serif text-xl tracking-tighter">
-                ADMIN <span className="text-[10px] text-gold uppercase tracking-[0.4em] ml-2 font-sans font-bold">Realm</span>
+                ADMIN <span className="text-[10px] text-gold uppercase tracking-[0.4em] font-sans font-bold">Realm</span>
              </motion.span>
            )}
            <button onClick={() => setSidebarOpen(!isSidebarOpen)} className="text-stone-400 hover:text-stone-900 transition-colors">
@@ -78,25 +145,12 @@ export const AdminLayout: React.FC<{ children: React.ReactNode }> = ({ children 
            </Link>
 
            {navGroups.map(group => (
-             <div key={group.title} className="space-y-3">
-                {isSidebarOpen && <span className="text-[9px] font-black uppercase tracking-[0.4em] text-stone-300 ml-4">{group.title}</span>}
-                <div className="space-y-1">
-                   {group.items.map(item => (
-                     <Link
-                       key={item.name}
-                       to={item.path}
-                       className={`flex items-center gap-4 p-4 rounded-xl transition-all ${location.pathname.startsWith(item.path) ? 'bg-stone-50 text-gold shadow-sm border border-stone-100' : 'text-stone-500 hover:bg-stone-50'}`}
-                     >
-                        {item.icon}
-                        {isSidebarOpen && <span className="font-bold text-[10px] tracking-widest uppercase">{item.name}</span>}
-                     </Link>
-                   ))}
-                </div>
-             </div>
+             <NavGroup key={group.title} group={group} isSidebarOpen={isSidebarOpen} location={location} />
            ))}
         </nav>
       </aside>
 
+      {/* Main Content */}
       <main className="flex-1 overflow-y-auto">
         <AnimatePresence mode="wait">
            <motion.div

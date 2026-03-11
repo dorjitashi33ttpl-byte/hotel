@@ -3,6 +3,7 @@ import { AdminLayout } from '../../components/admin/framework/AdminLayout';
 import { DataTable } from '../../components/admin/framework/DataTable';
 import { EntityFormModal } from '../../components/admin/framework/EntityFormModal';
 import { StatusBadge } from '../../components/admin/framework/StatusBadge';
+import { TaxRuleEditor } from '../../components/admin/TaxRuleEditor';
 
 export const TaxManagement: React.FC = () => {
   const [isModalOpen, setIsModalOpen] = useState(false);
@@ -32,15 +33,21 @@ export const TaxManagement: React.FC = () => {
 
   return (
     <AdminLayout>
-      <DataTable
-        title="Tax Configuration"
-        description="Govern the fiscal landscape of each sanctuary region."
-        columns={columns}
-        data={mockData}
-        onAdd={() => setIsModalOpen(true)}
-        onEdit={(t) => { setSelectedTax(t); setIsModalOpen(true); }}
-        onDelete={(t) => alert('Rescinding Tax ' + t.name)}
-      />
+      <div className="space-y-12">
+        <DataTable
+          title="Tax Configuration"
+          description="Govern the fiscal landscape of each sanctuary region."
+          columns={columns}
+          data={mockData}
+          onAdd={() => setIsModalOpen(true)}
+          onEdit={(t) => { setSelectedTax(t); setIsModalOpen(true); }}
+          onDelete={(t) => alert('Rescinding Tax ' + t.name)}
+        />
+
+        <div className="p-12 pt-0">
+           <TaxRuleEditor />
+        </div>
+      </div>
 
       <EntityFormModal
         title={selectedTax ? 'Amend Fiscal Rule' : 'Enact New Tax'}

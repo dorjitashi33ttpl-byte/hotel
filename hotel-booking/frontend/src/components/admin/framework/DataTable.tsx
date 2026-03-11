@@ -1,8 +1,10 @@
-import React from 'react';
+import React, { useState } from 'react';
 import {
   ChevronLeft, ChevronRight, Search, Filter,
-  MoreVertical, Edit2, Trash2, Eye, Download, Upload
+  MoreVertical, Edit2, Trash2, Eye, Download, Upload,
+  CheckSquare, Square
 } from 'lucide-react';
+import { StatusBadge } from './StatusBadge';
 
 interface Column {
   key: string;
@@ -21,13 +23,25 @@ interface DataTableProps {
   onView?: (item: any) => void;
   onExport?: () => void;
   onImport?: () => void;
+  bulkActions?: { label: string, action: (items: any[]) => void }[];
   loading?: boolean;
 }
 
 export const DataTable: React.FC<DataTableProps> = ({
   title, description, columns, data,
-  onAdd, onEdit, onDelete, onView, onExport, onImport, loading
+  onAdd, onEdit, onDelete, onView, onExport, onImport,
+  bulkActions, loading
 }) => {
+  const [selectedItems, setSelectedItems] = useState<any[]>([]);
+
+  const toggleSelect = (item: any) => {
+    setSelectedItems(prev => prev.includes(item) ? prev.filter(i => i !== item) : [...prev, item]);
+  };
+
+  const toggleSelectAll = () => {
+    setSelectedItems(selectedItems.length === data.length ? [] : [...data]);
+  };
+
   return (
     <div className="p-12 space-y-10">
       <div className="flex justify-between items-end">
@@ -60,20 +74,36 @@ export const DataTable: React.FC<DataTableProps> = ({
       </div>
 
       <div className="bg-white border border-stone-100 shadow-sm overflow-hidden">
-        <div className="p-8 border-b border-stone-50 flex justify-between items-center bg-stone-50/30">
-           <div className="relative w-96">
-              <Search className="absolute left-4 top-1/2 -translate-y-1/2 w-4 h-4 text-stone-300" />
-              <input type="text" placeholder="Search entries..." className="w-full bg-white border border-stone-100 py-3 pl-12 pr-4 outline-none font-light text-sm focus:border-gold transition-colors" />
-           </div>
-           <button className="flex items-center gap-2 text-[10px] font-black uppercase tracking-[0.2em] text-stone-400 hover:text-stone-900">
-              <Filter className="w-4 h-4" /> Filters
-           </button>
-        </div>
+        {selectedItems.length > 0 ? (
+          <div className="p-6 bg-stone-900 text-white flex justify-between items-center px-12">
+             <span className="text-[10px] font-bold uppercase tracking-widest">{selectedItems.length} items selected</span>
+             <div className="flex gap-6">
+                {bulkActions?.map(ba => (
+                  <button key={ba.label} onClick={() => ba.action(selectedItems)} className="text-[10px] font-black uppercase tracking-widest text-gold hover:text-white transition-colors">{ba.label}</button>
+                ))}
+                <button onClick={() => setSelectedItems([])} className="text-[10px] font-black uppercase tracking-widest opacity-50 hover:opacity-100">Clear</button>
+             </div>
+          </div>
+        ) : (
+          <div className="p-8 border-b border-stone-50 flex justify-between items-center bg-stone-50/30">
+             <div className="relative w-96">
+                <Search className="absolute left-4 top-1/2 -translate-y-1/2 w-4 h-4 text-stone-300" />
+                <input type="text" placeholder="Search entries..." className="w-full bg-white border border-stone-100 py-3 pl-12 pr-4 outline-none font-light text-sm focus:border-gold transition-colors" />
+             </div>
+             <button className="flex items-center gap-2 text-[10px] font-black uppercase tracking-[0.2em] text-stone-400 hover:text-stone-900">
+                <Filter className="w-4 h-4" /> Filters
+             </button>
+          </div>
+        )}
 
         <table className="w-full text-left">
            <thead>
               <tr className="border-b border-stone-100">
-                 <th className="p-6 w-12"><input type="checkbox" className="accent-stone-900" /></th>
+                 <th className="p-6 w-12">
+                    <button onClick={toggleSelectAll}>
+                       {selectedItems.length === data.length && data.length > 0 ? <CheckSquare className="w-4 h-4 text-stone-900" /> : <Square className="w-4 h-4 text-stone-200" />}
+                    </button>
+                 </th>
                  {columns.map(col => (
                    <th key={col.key} className="p-6 text-[10px] font-black uppercase tracking-[0.3em] text-stone-400">{col.header}</th>
                  ))}
@@ -82,8 +112,12 @@ export const DataTable: React.FC<DataTableProps> = ({
            </thead>
            <tbody className="divide-y divide-stone-50">
               {data.map((item, idx) => (
-                <tr key={idx} className="hover:bg-stone-50/50 transition-colors group">
-                   <td className="p-6"><input type="checkbox" className="accent-stone-900" /></td>
+                <tr key={idx} className={`hover:bg-stone-50/50 transition-colors group ${selectedItems.includes(item) ? 'bg-stone-50' : ''}`}>
+                   <td className="p-6">
+                      <button onClick={() => toggleSelect(item)}>
+                         {selectedItems.includes(item) ? <CheckSquare className="w-4 h-4 text-stone-900" /> : <Square className="w-4 h-4 text-stone-200" />}
+                      </button>
+                   </td>
                    {columns.map(col => (
                      <td key={col.key} className="p-6 text-sm font-medium text-stone-600">
                         {col.render ? col.render(item[col.key], item) : item[col.key]}
@@ -111,8 +145,8 @@ export const DataTable: React.FC<DataTableProps> = ({
         <div className="p-8 bg-stone-50/30 border-t border-stone-50 flex justify-between items-center">
            <span className="text-[10px] font-bold text-stone-400 uppercase tracking-widest">Showing 1 to {data.length} of {data.length} entries</span>
            <div className="flex gap-4">
-              <button className="p-2 border border-stone-200 hover:bg-stone-100 transition-all"><ChevronLeft className="w-4 h-4" /></button>
-              <button className="p-2 border border-stone-200 hover:bg-stone-100 transition-all"><ChevronRight className="w-4 h-4" /></button>
+              <button className="p-2 border border-stone-200 hover:bg-stone-100 transition-all disabled:opacity-30" disabled><ChevronLeft className="w-4 h-4" /></button>
+              <button className="p-2 border border-stone-200 hover:bg-stone-100 transition-all disabled:opacity-30" disabled><ChevronRight className="w-4 h-4" /></button>
            </div>
         </div>
       </div>

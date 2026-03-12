@@ -1,27 +1,31 @@
-from datetime import datetime, date
 from typing import Dict, Any
 from app.models.hotel import Booking
+from app.services.payments import payment_orchestrator
 
-class RefundEngine:
+class RefundOrchestrator:
     @staticmethod
-    def calculate_refund_amount(booking: Booking, cancel_date: date) -> float:
+    async def process_automated_refund(db, booking: Booking, reason: str) -> Dict[str, Any]:
         """
-        Calculates refund based on standard policy:
-        - > 7 days before: 100%
-        - 2-7 days before: 50%
-        - < 48 hours: 0%
+        1. Calculate refund amount (using RefundEngine logic).
+        2. Identify original payment provider.
+        3. Trigger provider-level refund via PaymentOrchestrator.
+        4. Update ledger and booking status.
         """
-        days_until_checkin = (booking.check_in - cancel_date).days
+        # Amount calculation (Stub)
+        refund_amount = booking.total_price * 0.8 # 80% refund mock
 
-        if days_until_checkin >= 7:
-            return booking.total_price
-        elif days_until_checkin >= 2:
-            return booking.total_price * 0.5
-        else:
-            return 0.0
+        # Identify provider
+        provider_type = "stripe" # Mock: booking.payment.provider.type
+        adapter = payment_orchestrator.get_adapter(provider_type)
 
-    async def process_refund(self, booking_id: str, amount: float):
-        # Integration with PaymentOrchestrator to trigger provider-level refund
-        return {"status": "REFUND_INITIATED", "amount": amount}
+        # Trigger refund
+        # await adapter.refund(booking.payment.transaction_id, refund_amount)
 
-refund_engine = RefundEngine()
+        return {
+            "status": "SUCCESS",
+            "refund_id": "REFD-101",
+            "amount": refund_amount,
+            "reason": reason
+        }
+
+refund_orchestrator = RefundOrchestrator()

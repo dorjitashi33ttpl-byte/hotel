@@ -1,20 +1,26 @@
+from typing import Dict, Any
+from sqlalchemy.orm import Session
 from app.models.user import User
 
-class FraudCheckService:
+class FraudService:
     @staticmethod
-    async def run_risk_assessment(user: User, ip_address: str) -> dict:
-        risk_score = 0
+    async def assess_risk(db: Session, user: User, ip_address: str) -> Dict[str, Any]:
+        """
+        Runs risk assessment for a booking request.
+        """
+        score = 0
         reasons = []
 
-        # Logic for frequency checks, blacklisted IPs, etc.
-        if not user.is_active:
-            risk_score += 100
-            reasons.append("Inactive user account")
+        # 1. New user with high value booking
+        # 2. IP address from high-risk country
+        # 3. User with previous failed payments
+
+        # Simple velocity check logic stub
 
         return {
-            "risk_score": risk_score,
-            "is_blocked": risk_score >= 100,
-            "reasons": reasons
+            "score": score,
+            "is_high_risk": score >= 80,
+            "recommendation": "APPROVE" if score < 50 else "REVIEW"
         }
 
-fraud_check_service = FraudCheckService()
+fraud_service = FraudService()

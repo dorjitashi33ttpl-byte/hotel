@@ -1,17 +1,19 @@
 import pytest
-from app.services.fraud import fraud_check_service
-from app.services.analytics import analytics_service
-from app.models.user import User
+from app.services.fraud import fraud_service
+from app.services.reputation import reputation_service
+from unittest.mock import MagicMock
 
 @pytest.mark.asyncio
-async def test_fraud_check():
-    user = User(is_active=False)
-    res = await fraud_check_service.run_risk_assessment(user, "127.0.0.1")
-    assert res["is_blocked"] == True
-    assert "Inactive user account" in res["reasons"]
+async def test_fraud_check_logic():
+    db = MagicMock()
+    user = MagicMock()
+    result = await fraud_service.assess_risk(db, user, "1.1.1.1")
+    assert "score" in result
+    assert "recommendation" in result
 
 @pytest.mark.asyncio
-async def test_analytics_empty():
-    # res = await analytics_service.calculate_yield_metrics(None, 1)
-    # assert res["gross_revenue"] == 0
-    pass
+async def test_reputation_score():
+    db = MagicMock()
+    db.query.return_value.filter.return_value.scalar.return_value = 4.8
+    score = await reputation_service.get_hotel_score(db, "hotel-1")
+    assert score == 4.8

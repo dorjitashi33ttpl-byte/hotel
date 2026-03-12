@@ -45,3 +45,12 @@ class Payout(Base):
     payout_date = Column(DateTime)
     status = Column(String) # processed, failed
     reference = Column(String)
+
+class PaymentProviderRegistry(Base):
+    __tablename__ = "payment_provider_registry"
+    id = Column(String, primary_key=True)
+    country_id = Column(String, ForeignKey("countries.id"))
+    provider_type = Column(String) # stripe, razorpay, paypal, local_bank
+    is_active = Column(Boolean, default=True)
+    credentials_encrypted = Column(String) # Encrypted JSON
+    settings = Column(JSON) # currencies, min/max limits

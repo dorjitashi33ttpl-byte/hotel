@@ -29,3 +29,21 @@ async def get_saved_hotels(user_id: str, db: AsyncSession = Depends(get_db)):
     stmt = select(Hotel).join(SavedHotel, SavedHotel.hotel_id == Hotel.id).where(SavedHotel.user_id == user_id)
     result = await db.execute(stmt)
     return result.scalars().all()
+
+from app.services.geo import geo_service
+
+@router.get("/hotels/{id}/route")
+async def get_hotel_route(
+    id: str,
+    from_lat: float,
+    from_lng: float,
+    db: AsyncSession = Depends(get_db)
+):
+    hotel = await db.get(Hotel, id)
+    if not hotel:
+        raise HTTPException(status_code=404, detail="Hotel not found")
+
+    route_data = await geo_service.get_route_and_distance(
+        from_lat, from_lng, hotel.lat, hotel.lng
+    )
+    return route_data

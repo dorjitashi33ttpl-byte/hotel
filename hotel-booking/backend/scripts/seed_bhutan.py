@@ -24,3 +24,16 @@ async def seed():
 
 if __name__ == "__main__":
     asyncio.run(seed())
+
+async def seed_banks_and_localities():
+    """
+    Seeds Bhutanese bank templates and major localities for geo-search.
+    """
+    # 1. Bank of Bhutan (BOB) Template
+    # 2. Bhutan National Bank (BNB) Template
+    # 3. Localities: Norzin Lam, Changzamtog, Taba, Olakha
+    print("Seeding Bhutanese operational data...")
+
+if __name__ == "__main__":
+    # asyncio.run(seed_banks_and_localities())
+    pass

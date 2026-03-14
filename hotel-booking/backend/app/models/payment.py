@@ -54,3 +54,14 @@ class PaymentProviderRegistry(Base):
     is_active = Column(Boolean, default=True)
     credentials_encrypted = Column(String) # Encrypted JSON
     settings = Column(JSON) # currencies, min/max limits
+
+class Payout(Base):
+    __tablename__ = "payouts"
+    id = Column(String, primary_key=True)
+    hotel_id = Column(String, ForeignKey("hotels.id"))
+    amount = Column(Float, nullable=False)
+    currency = Column(String, default="BTN")
+    status = Column(String, default="PENDING") # PENDING, PROCESSED, FAILED
+    processed_at = Column(DateTime)
+    reference_number = Column(String)
+    created_at = Column(DateTime, default=func.now())

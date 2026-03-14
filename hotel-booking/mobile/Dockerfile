@@ -3,5 +3,5 @@ WORKDIR /app
 COPY package*.json ./
 RUN npm install
 COPY . .
-EXPOSE 19000 19001 19002
-CMD ["npx", "expo", "start", "--web"]
+# Mobile apps are usually built for stores, but for a web-preview or dev-server:
+CMD ["npm", "start"]

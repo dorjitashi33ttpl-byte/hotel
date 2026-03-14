@@ -15,6 +15,7 @@ import { ProfileScreen } from './src/screens/ProfileScreen';
 import { BookingDetailScreen } from './src/screens/BookingDetailScreen';
 import { LateArrivalScreen } from './src/screens/LateArrivalScreen';
 import { BookingScreen } from './src/screens/BookingScreen';
+import { DirectionsScreen } from './src/screens/DirectionsScreen';
 
 const Stack = createNativeStackNavigator();
 const Tab = createBottomTabNavigator();
@@ -63,6 +64,7 @@ function NavigationRoot() {
         <Stack.Screen name="Booking" component={BookingScreen} options={{ title: 'Reservation' }} />
         <Stack.Screen name="BookingDetail" component={BookingDetailScreen} options={{ title: 'Stay Details' }} />
         <Stack.Screen name="LateArrival" component={LateArrivalScreen} options={{ title: 'Arrival Update' }} />
+<Stack.Screen name="Directions" component={DirectionsScreen} options={{ presentation: 'modal', headerShown: false }} />
       </Stack.Navigator>
     </NavigationContainer>
   );

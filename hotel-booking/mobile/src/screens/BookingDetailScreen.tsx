@@ -102,3 +102,15 @@ const styles = StyleSheet.create({
   backBtn: { borderBottomWidth: 1, borderBottomColor: Colors.stone900 },
   backBtnText: { fontSize: 10, fontWeight: 'bold', textTransform: 'uppercase', letterSpacing: 2, paddingBottom: 4 },
 });
+
+         <TouchableOpacity
+           style={styles.directionsBtn}
+           onPress={() => navigation.navigate('Directions', {
+             hotelName: 'Amankora Paro',
+             distance: '12.5 km',
+             duration: '25 mins',
+             polyline: 'stub_polyline'
+           })}
+         >
+            <Text style={styles.directionsBtnText}>Get Directions</Text>
+         </TouchableOpacity>

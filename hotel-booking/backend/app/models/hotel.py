@@ -103,3 +103,13 @@ class Review(Base):
     comment = Column(String)
     is_verified = Column(Boolean, default=False)
     created_at = Column(DateTime, default=func.now())
+
+class PreArrivalForm(Base):
+    __tablename__ = "pre_arrival_forms"
+    id = Column(String, primary_key=True)
+    booking_id = Column(String, ForeignKey("bookings.id"), unique=True)
+    arrival_time = Column(DateTime)
+    identity_docs = Column(JSON) # List of image URLs
+    special_requests = Column(String)
+    is_completed = Column(Boolean, default=False)
+    completed_at = Column(DateTime)

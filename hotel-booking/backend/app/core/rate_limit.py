@@ -1,3 +1,4 @@
+from datetime import date
 import time
 from fastapi import Request, HTTPException, status
 from app.core.config import settings
@@ -35,6 +36,28 @@ async def rate_limit_middleware(request: Request, call_next):
             raise HTTPException(
                 status_code=status.HTTP_429_TOO_MANY_REQUESTS,
                 detail="Too many requests. Please try again later."
+            )
+
+    return await call_next(request)
+
+async def partner_quota_middleware(request: Request, call_next):
+    """
+    Enforces daily API quotas for partner applications.
+    """
+    if request.url.path.startswith(f"{settings.API_V1_STR}/partner"):
+        partner_id = request.headers.get("X-Partner-ID")
+        if not partner_id:
+            raise HTTPException(status_code=401, detail="Partner identification missing")
+
+        # 1. Increment usage in Redis
+        usage_key = f"partner_usage:{partner_id}:{date.today().isoformat()}"
+        usage = await limiter.redis.incr(usage_key)
+
+        # 2. Compare against quota (Mocked limit of 1000)
+        if usage > 1000:
+            raise HTTPException(
+                status_code=status.HTTP_429_TOO_MANY_REQUESTS,
+                detail="Daily API quota exceeded."
             )
 
     return await call_next(request)

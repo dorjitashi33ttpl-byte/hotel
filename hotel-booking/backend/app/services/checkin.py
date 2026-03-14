@@ -1,27 +1,42 @@
-import qrcode
-from io import BytesIO
-from app.models.booking import Booking
-from app.services.storage import storage_service
+import hashlib
+import time
+from app.core.config import settings
 
-class CheckInService:
+class DigitalKeyService:
     @staticmethod
-    async def generate_digital_key(booking: Booking) -> str:
-        # Secure token for check-in
-        token = f"KEY-{booking.id}-{booking.tenant_id}"
+    def generate_key_token(booking_id: str, secret: str) -> str:
+        """
+        Generates a secure digital key token for the guest.
+        """
+        payload = f"{booking_id}:{secret}:{int(time.time())}"
+        return hashlib.sha256(payload.encode()).hexdigest()
 
-        # Generate QR Code
-        qr = qrcode.QRCode(version=1, box_size=10, border=5)
-        qr.add_data(token)
-        qr.make(fit=True)
+    async def get_digital_key_data(self, booking_id: str):
+        # In production, verify booking status is 'CHECKED_IN'
+        token = self.generate_key_token(booking_id, settings.SECRET_KEY)
+        return {
+            "qr_data": f"hotel-key://{booking_id}?token={token}",
+            "expires_in": 3600
+        }
 
-        img = qr.make_image(fill_color="black", back_color="white")
-        buf = BytesIO()
-        img.save(buf)
-        buf.seek(0)
+digital_key_service = DigitalKeyService()
 
-        # Upload to media storage
-        path = f"keys/booking-{booking.id}.png"
-        url = await storage_service.upload_file(buf, path, "image/png")
-        return url
+from app.models.hotel import PreArrivalForm, Booking
+from sqlalchemy.orm import Session
+from fastapi import HTTPException, status
 
-checkin_service = CheckInService()
+async def verify_pre_arrival_and_checkin(db: Session, booking_id: str):
+    """
+    Ensures pre-arrival form is completed before allowing digital check-in.
+    """
+    form = db.query(PreArrivalForm).filter(PreArrivalForm.booking_id == booking_id).first()
+    if not form or not form.is_completed:
+        raise HTTPException(
+            status_code=status.HTTP_403_FORBIDDEN,
+            detail="Please complete your pre-arrival form before checking in."
+        )
+
+    booking = db.query(Booking).filter(Booking.id == booking_id).first()
+    booking.status = "CHECKED_IN"
+    db.commit()
+    return {"status": "success", "message": "Checked in successfully"}

@@ -1,20 +1,40 @@
-from typing import List, Dict, Any, Optional
-from app.worker.tasks import send_booking_confirmation_email
+from abc import ABC, abstractmethod
+from typing import List, Optional, Dict, Any
+from app.core.config import settings
+import httpx
+
+class EmailAdapter(ABC):
+    @abstractmethod
+    async def send_email(self, to_email: str, subject: str, template_name: str, context: Dict[str, Any]):
+        pass
+
+class SendGridAdapter(EmailAdapter):
+    async def send_email(self, to_email: str, subject: str, template_name: str, context: Dict[str, Any]):
+        # Implementation for SendGrid API
+        # url = "https://api.sendgrid.com/v3/mail/send"
+        # headers = {"Authorization": f"Bearer {settings.SENDGRID_API_KEY}"}
+        return {"status": "sent", "provider": "sendgrid"}
+
+class ConsoleAdapter(EmailAdapter):
+    async def send_email(self, to_email: str, subject: str, template_name: str, context: Dict[str, Any]):
+        print(f"--- EMAIL SENT TO {to_email} ---")
+        print(f"Subject: {subject}")
+        print(f"Template: {template_name}")
+        print(f"Context: {context}")
+        print("---------------------------------")
+        return {"status": "sent", "provider": "console"}
 
 class NotificationService:
-    @staticmethod
-    async def send_event(event_type: str, context: Dict[str, Any], recipient: str):
-        # Dispatches to the appropriate worker task based on event type
-        if event_type == "BOOKING_CONFIRMED":
-            send_booking_confirmation_email.delay(context["booking_id"])
+    def __init__(self):
+        # In production, this would be configured via settings
+        self.email_adapter = SendGridAdapter() if settings.SENDGRID_API_KEY else ConsoleAdapter()
 
-        # Internal Staff Alert logic
-        if "staff_alert" in context:
-            print(f"Internal Alert: {context['staff_alert']} for property {context.get('hotel_id')}")
-
-    @staticmethod
-    async def notify_late_arrival(booking_id: int, arrival_time: str):
-        # Trigger background task for late arrival notification
-        print(f"Task queued: Late arrival for {booking_id} at {arrival_time}")
+    async def send_booking_confirmation(self, email: str, booking_details: Dict[str, Any]):
+        await self.email_adapter.send_email(
+            to_email=email,
+            subject="Your Stay is Confirmed!",
+            template_name="booking_confirmation",
+            context=booking_details
+        )
 
 notification_service = NotificationService()

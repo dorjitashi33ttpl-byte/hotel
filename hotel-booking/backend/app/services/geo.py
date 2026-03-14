@@ -1,41 +1,41 @@
-import httpx
-from typing import List, Dict, Any, Optional
+from typing import Dict, Any, List
 from app.core.config import settings
+import httpx
 
 class GeoService:
-    def __init__(self):
-        self.base_url = "https://api.mapbox.com"
-        self.access_token = settings.MAPBOX_ACCESS_TOKEN
+    @staticmethod
+    async def get_route_and_distance(from_lat: float, from_lng: float, to_lat: float, to_lng: float) -> Dict[str, Any]:
+        """
+        Uses Mapbox Directions API to calculate distance, duration, and route polyline.
+        """
+        access_token = settings.MAPBOX_ACCESS_TOKEN
+        if not access_token:
+            # Fallback/Mock for local development
+            return {
+                "distance_km": 12.5,
+                "duration_mins": 25,
+                "polyline": "encoded_polyline_stub"
+            }
 
-    async def reverse_geocode(self, lat: float, lng: float) -> Dict[str, Any]:
+        url = f"https://api.mapbox.com/directions/v5/mapbox/driving/{from_lng},{from_lat};{to_lng},{to_lat}"
+        params = {
+            "access_token": access_token,
+            "geometries": "polyline",
+            "overview": "full"
+        }
+
         async with httpx.AsyncClient() as client:
-            url = f"{self.base_url}/geocoding/v5/mapbox.places/{lng},{lat}.json"
-            params = {"access_token": self.access_token, "types": "place,country"}
-            response = await client.get(url, params=params)
-            response.raise_for_status()
-            features = response.json().get('features', [])
+            resp = await client.get(url, params=params)
+            data = resp.json()
 
-            context = {"city": None, "country_iso": None}
-            for f in features:
-                if 'place' in f['place_type']: context['city'] = f['text']
-                if 'country' in f['place_type']: context['country_iso'] = f['properties'].get('short_code', '').upper()
-            return context
+            if resp.status_code == 200 and data.get("routes"):
+                route = data["routes"][0]
+                return {
+                    "distance_km": round(route["distance"] / 1000, 2),
+                    "duration_mins": round(route["duration"] / 60),
+                    "polyline": route["geometry"]
+                }
 
-    async def get_route(self, from_lat: float, from_lng: float, to_lat: float, to_lng: float) -> Dict[str, Any]:
-        async with httpx.AsyncClient() as client:
-            url = f"{self.base_url}/directions/v5/mapbox/driving/{from_lng},{from_lat};{to_lng},{to_lat}"
-            params = {"access_token": self.access_token, "geometries": "geojson", "overview": "full"}
-            response = await client.get(url, params=params)
-            response.raise_for_status()
-            route = response.json()['routes'][0]
-            return {"distance_km": route['distance'] / 1000.0, "duration_min": route['duration'] / 60.0, "geometry": route['geometry']}
-
-    async def autocomplete(self, query: str, country: str = "BT") -> List[Dict[str, Any]]:
-        async with httpx.AsyncClient() as client:
-            url = f"{self.base_url}/geocoding/v5/mapbox.places/{query}.json"
-            params = {"access_token": self.access_token, "country": country, "types": "address,place,locality"}
-            response = await client.get(url, params=params)
-            response.raise_for_status()
-            return response.json()['features']
+        return {"error": "Failed to fetch route"}
 
 geo_service = GeoService()

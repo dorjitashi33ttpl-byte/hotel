@@ -1,29 +1,37 @@
 import React from 'react';
-import { Grid, User, LogIn } from 'lucide-react';
 
-export const RoomRack: React.FC = () => {
-  const grid = Array.from({ length: 5 }, (_, i) => 100 + i + 1);
+const rooms = [
+  { id: '101', type: 'Deluxe', status: 'OCCUPIED', guest: 'Tashi Dorji' },
+  { id: '102', type: 'Deluxe', status: 'READY', guest: null },
+  { id: '201', type: 'Heritage', status: 'DIRTY', guest: null },
+  { id: '202', type: 'Heritage', status: 'MAINTENANCE', guest: null },
+];
 
+export const RoomRack = () => {
   return (
-    <div className="bg-white p-12 border border-stone-100 shadow-sm rounded-3xl space-y-12">
-      <div className="flex justify-between items-center">
-         <h3 className="text-2xl font-serif">The Room Rack</h3>
-         <div className="flex gap-4">
-            <span className="flex items-center gap-2 text-[10px] font-bold uppercase text-green-500"><div className="w-2 h-2 bg-green-500 rounded-full" /> Ready</span>
-            <span className="flex items-center gap-2 text-[10px] font-bold uppercase text-red-500"><div className="w-2 h-2 bg-red-500 rounded-full" /> Occupied</span>
-         </div>
-      </div>
-
-      <div className="grid grid-cols-5 md:grid-cols-8 lg:grid-cols-10 gap-4">
-         {grid.map(room => {
-           const isOccupied = Math.random() > 0.6;
-           return (
-             <div key={room} className={`aspect-square rounded-2xl flex flex-col items-center justify-center gap-2 cursor-pointer transition-all border ${isOccupied ? 'bg-stone-900 text-white border-stone-900' : 'bg-white text-stone-400 border-stone-100 hover:border-gold'}`}>
-                <span className="text-sm font-serif">{room}</span>
-                {isOccupied ? <User className="w-3 h-3" /> : <LogIn className="w-3 h-3 opacity-20" />}
+    <div className="p-8">
+      <h2 className="text-3xl font-serif mb-12">Room Operations Rack</h2>
+      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-8">
+        {rooms.map(room => (
+          <div key={room.id} className="bg-white border border-stone-100 p-8 shadow-sm hover:shadow-md transition-all">
+             <div className="flex justify-between items-start mb-6">
+                <span className="text-2xl font-serif">#{room.id}</span>
+                <span className={`text-[9px] font-black px-2 py-1 tracking-tighter ${
+                  room.status === 'READY' ? 'bg-green-100 text-green-700' :
+                  room.status === 'OCCUPIED' ? 'bg-stone-900 text-white' :
+                  'bg-stone-100 text-stone-500'
+                }`}>
+                  {room.status}
+                </span>
              </div>
-           );
-         })}
+             <p className="text-[10px] font-bold text-stone-400 uppercase tracking-widest mb-2">{room.type}</p>
+             <p className="text-sm font-medium text-stone-900">{room.guest || 'Vacant'}</p>
+             <div className="mt-8 pt-6 border-t border-stone-50 flex gap-4">
+                <button className="text-[9px] font-black uppercase text-[var(--luxury-gold)]">Check-In</button>
+                <button className="text-[9px] font-black uppercase text-stone-400">Details</button>
+             </div>
+          </div>
+        ))}
       </div>
     </div>
   );

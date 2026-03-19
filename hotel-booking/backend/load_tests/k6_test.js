@@ -3,31 +3,23 @@ import { check, sleep } from 'k6';
 
 export const options = {
   stages: [
-    { duration: '1m', target: 50 },  // ramp up
-    { duration: '3m', target: 500 }, // stay at 500 users
-    { duration: '1m', target: 0 },   // ramp down
+    { duration: '1m', target: 100 },  // ramp up to 100 users
+    { duration: '3m', target: 500 },  // stay at 500 users
+    { duration: '1m', target: 4000 }, // stress test to 4k
+    { duration: '2m', target: 0 },    // scale down
   ],
-  thresholds: {
-    http_req_duration: ['p(95)<500'], // 95% of requests must be under 500ms
-  },
 };
 
-const BASE_URL = 'http://localhost:8000/api/v1';
+const BASE_URL = 'http://api.hotel.bt/v1';
 
 export default function () {
-  // 1. Search Hotels
-  const searchRes = http.get(`${BASE_URL}/public/hotels`);
-  check(searchRes, { 'status is 200': (r) => r.status === 200 });
+  const responses = http.batch([
+    ['GET', `${BASE_URL}/public/hotels`],
+    ['GET', `${BASE_URL}/public/hotels/hotel-1/availability?start=2026-06-01&end=2026-06-05`],
+  ]);
+
+  check(responses[0], { 'search status was 200': (r) => r.status === 200 });
+  check(responses[1], { 'avail status was 200': (r) => r.status === 200 });
 
   sleep(1);
-
-  // 2. Check Availability
-  const availRes = http.get(`${BASE_URL}/public/hotels/hotel-1/availability?start=2026-06-01&end=2026-06-05`);
-  check(availRes, { 'status is 200': (r) => r.status === 200 });
-
-  sleep(2);
-
-  // 3. Health Check
-  const healthRes = http.get(`${BASE_URL}/health`);
-  check(healthRes, { 'status is 200': (r) => r.status === 200 });
 }

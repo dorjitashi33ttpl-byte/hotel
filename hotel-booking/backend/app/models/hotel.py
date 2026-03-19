@@ -113,3 +113,12 @@ class PreArrivalForm(Base):
     special_requests = Column(String)
     is_completed = Column(Boolean, default=False)
     completed_at = Column(DateTime)
+
+class ShiftTemplate(Base):
+    __tablename__ = "shift_templates"
+    id = Column(String, primary_key=True)
+    hotel_id = Column(String, ForeignKey("hotels.id"))
+    name = Column(String) # Morning, Evening, Night
+    start_time_base = Column(String) # HH:MM
+    end_time_base = Column(String) # HH:MM
+    required_staff_count = Column(Integer, default=1)

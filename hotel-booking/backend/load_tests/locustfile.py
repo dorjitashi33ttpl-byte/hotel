@@ -1,13 +1,16 @@
 from locust import HttpUser, task, between
-import random
 
-class BookingUser(HttpUser):
+class HotelSaaSUser(HttpUser):
     wait_time = between(1, 5)
 
     @task
     def search_hotels(self):
-        self.client.get("/api/v1/public/hotels/search?lat=27.4728&lng=89.6339&radius_km=10&check_in=2024-06-01T12:00:00Z&check_out=2024-06-05T12:00:00Z")
+        self.client.get("/api/v1/public/hotels")
 
     @task
-    def autocomplete(self):
-        self.client.get("/api/v1/public/geo/autocomplete?q=Thimphu&country=BT")
+    def get_hotel_details(self):
+        self.client.get("/api/v1/public/hotels/hotel-1")
+
+    @task
+    def check_availability(self):
+        self.client.get("/api/v1/public/hotels/hotel-1/availability?start=2026-06-01&end=2026-06-05")

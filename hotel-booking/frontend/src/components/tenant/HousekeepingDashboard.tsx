@@ -1,50 +1,57 @@
-import React, { useState } from 'react';
-import { Sparkles, Trash2, CheckCircle, RefreshCw } from 'lucide-react';
-import { StatusBadge } from '../admin/framework/StatusBadge';
+import React from 'react';
 
-export const HousekeepingDashboard: React.FC = () => {
-  const [rooms, setRooms] = useState([
-    { id: '101', type: 'Deluxe', status: 'DIRTY', assignee: 'Sonam P.' },
-    { id: '102', type: 'Deluxe', status: 'READY', assignee: 'None' },
-    { id: '201', type: 'Heritage', status: 'IN_PROGRESS', assignee: 'Karma W.' },
-    { id: '202', type: 'Heritage', status: 'DIRTY', assignee: 'Sonam P.' },
-  ]);
+const tasks = [
+  { id: 'HK-001', room: '101', type: 'FULL_CLEAN', status: 'IN_PROGRESS', staff: 'Pema' },
+  { id: 'HK-002', room: '201', type: 'TURNDOWN', status: 'PENDING', staff: 'Dorji' },
+  { id: 'HK-003', room: '104', type: 'STAY_OVER', status: 'COMPLETED', staff: 'Pema' },
+];
 
-  const toggleStatus = (id: string) => {
-    setRooms(prev => prev.map(r => {
-      if (r.id === id) {
-        const nextStatus = r.status === 'DIRTY' ? 'IN_PROGRESS' : r.status === 'IN_PROGRESS' ? 'READY' : 'DIRTY';
-        return { ...r, status: nextStatus };
-      }
-      return r;
-    }));
-  };
-
+export const HousekeepingDashboard = () => {
   return (
-    <div className="bg-white p-12 border border-stone-100 shadow-sm rounded-3xl space-y-12">
-      <div className="flex justify-between items-center">
-         <h3 className="text-2xl font-serif">Housekeeping Center</h3>
-         <button className="flex items-center gap-2 text-[9px] font-black uppercase tracking-widest text-stone-400">
-            <RefreshCw className="w-3 h-3" /> Auto-Refresh Active
-         </button>
+    <div className="p-8">
+      <div className="flex justify-between items-center mb-12">
+        <h2 className="text-3xl font-serif">Housekeeping Overview</h2>
+        <div className="flex gap-4">
+           <div className="text-center px-6 py-2 bg-stone-50 border border-stone-100">
+              <p className="text-[10px] font-black text-stone-400 uppercase">Dirty Rooms</p>
+              <p className="text-xl font-serif">12</p>
+           </div>
+           <div className="text-center px-6 py-2 bg-stone-50 border border-stone-100">
+              <p className="text-[10px] font-black text-stone-400 uppercase">In Progress</p>
+              <p className="text-xl font-serif">3</p>
+           </div>
+        </div>
       </div>
 
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-8">
-         {rooms.map(room => (
-           <div key={room.id} className="p-8 border border-stone-50 rounded-2xl bg-stone-50/30 space-y-6">
-              <div className="flex justify-between items-start">
-                 <span className="font-serif text-2xl">{room.id}</span>
-                 <StatusBadge status={room.status} />
-              </div>
-              <p className="text-[10px] text-stone-400 font-bold uppercase tracking-widest">{room.type} • {room.assignee}</p>
-              <button
-                onClick={() => toggleStatus(room.id)}
-                className="w-full py-3 bg-white border border-stone-200 text-[9px] font-black uppercase tracking-widest hover:border-gold transition-all"
-              >
-                Mark as {room.status === 'DIRTY' ? 'In Progress' : room.status === 'IN_PROGRESS' ? 'Ready' : 'Dirty'}
-              </button>
-           </div>
-         ))}
+      <div className="bg-white border border-stone-100 shadow-sm overflow-hidden">
+        <table className="w-full text-left border-collapse">
+          <thead>
+            <tr className="bg-stone-50">
+              <th className="p-6 text-[10px] font-black uppercase text-stone-400">Room</th>
+              <th className="p-6 text-[10px] font-black uppercase text-stone-400">Task Type</th>
+              <th className="p-6 text-[10px] font-black uppercase text-stone-400">Assigned To</th>
+              <th className="p-6 text-[10px] font-black uppercase text-stone-400">Status</th>
+              <th className="p-6 text-[10px] font-black uppercase text-stone-400">Action</th>
+            </tr>
+          </thead>
+          <tbody>
+            {tasks.map(task => (
+              <tr key={task.id} className="border-t border-stone-50 hover:bg-stone-50/50 transition-colors">
+                <td className="p-6 text-sm font-bold">#{task.room}</td>
+                <td className="p-6 text-xs text-stone-500">{task.type}</td>
+                <td className="p-6 text-sm italic">{task.staff}</td>
+                <td className="p-6 text-[9px] font-black">
+                  <span className={`px-3 py-1 ${task.status === 'COMPLETED' ? 'bg-green-100 text-green-700' : 'bg-stone-900 text-white'}`}>
+                    {task.status}
+                  </span>
+                </td>
+                <td className="p-6">
+                  <button className="text-[10px] font-black uppercase text-[var(--luxury-gold)] hover:underline">Update</button>
+                </td>
+              </tr>
+            ))}
+          </tbody>
+        </table>
       </div>
     </div>
   );

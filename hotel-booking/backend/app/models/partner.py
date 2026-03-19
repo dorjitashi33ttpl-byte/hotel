@@ -28,3 +28,14 @@ class PartnerQuota(Base):
     daily_limit = Column(Integer, default=1000)
     current_usage = Column(Integer, default=0)
     reset_date = Column(Date, default=func.current_date())
+
+class WebhookDeliveryLog(Base):
+    __tablename__ = "webhook_delivery_logs"
+    id = Column(String, primary_key=True)
+    partner_id = Column(String, ForeignKey("partner_apps.id"))
+    event_type = Column(String)
+    payload = Column(JSON)
+    status_code = Column(Integer)
+    response_body = Column(String)
+    duration_ms = Column(Integer)
+    created_at = Column(DateTime, default=func.now())

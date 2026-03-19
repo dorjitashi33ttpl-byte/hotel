@@ -1,18 +1,28 @@
-import aioredis
-from app.core.config import settings
+from sqlalchemy.orm import Session
+from app.models.partner import WebhookDeliveryLog
+import uuid
 
 class TrackingService:
-    def __init__(self):
-        self.redis = aioredis.from_url(settings.REDIS_URL, decode_responses=True)
-
-    async def track_view(self, user_id: int, hotel_id: int):
-        key = f"user:{user_id}:recent_hotels"
-        # Store last 5 viewed hotels
-        await self.redis.lpush(key, hotel_id)
-        await self.redis.ltrim(key, 0, 4)
-
-    async def get_recent_hotels(self, user_id: int):
-        key = f"user:{user_id}:recent_hotels"
-        return await self.redis.lrange(key, 0, -1)
+    @staticmethod
+    def log_webhook_delivery(
+        db: Session,
+        partner_id: str,
+        event_type: str,
+        payload: dict,
+        status_code: int,
+        response_body: str,
+        duration: int
+    ):
+        log = WebhookDeliveryLog(
+            id=str(uuid.uuid4()),
+            partner_id=partner_id,
+            event_type=event_type,
+            payload=payload,
+            status_code=status_code,
+            response_body=response_body,
+            duration_ms=duration
+        )
+        db.add(log)
+        db.commit()
 
 tracking_service = TrackingService()

@@ -1,11 +1,11 @@
-from sqlalchemy import Column, String, Integer, ForeignKey, Boolean, Float, JSON, DateTime
+from sqlalchemy import Column, String, Integer, ForeignKey, Boolean, Float, JSON, DateTime, func
 from sqlalchemy.orm import relationship
 from .base import Base
 
 class Payment(Base):
     __tablename__ = "payments"
-    id = Column(Integer, primary_key=True, index=True)
-    booking_id = Column(Integer, ForeignKey("bookings.id"))
+    id = Column(String, primary_key=True)
+    booking_id = Column(String, ForeignKey("bookings.id"))
     provider = Column(String)
     provider_payment_id = Column(String, index=True)
     amount = Column(Float)
@@ -14,37 +14,35 @@ class Payment(Base):
 
     booking = relationship("Booking")
 
-class PaymentProviderConfig(Base):
-    __tablename__ = "payment_provider_configs"
-    id = Column(Integer, primary_key=True, index=True)
-    country_id = Column(Integer, ForeignKey("countries.id"))
-    tenant_id = Column(Integer, ForeignKey("tenants.id"), nullable=True)
-    provider_type = Column(String)
-    credentials_encrypted = Column(String)
-    is_enabled = Column(Boolean, default=True)
-    config_data = Column(JSON)
+class PaymentStatus:
+    PENDING = "PENDING"
+    SUCCESS = "SUCCESS"
+    FAILED = "FAILED"
+    REFUNDED = "REFUNDED"
 
 class CommissionLedger(Base):
     __tablename__ = "commission_ledger"
-    id = Column(Integer, primary_key=True, index=True)
-    tenant_id = Column(Integer, ForeignKey("tenants.id"), index=True)
-    booking_id = Column(Integer, ForeignKey("bookings.id"))
+    id = Column(String, primary_key=True)
+    tenant_id = Column(String, index=True)
+    booking_id = Column(String, ForeignKey("bookings.id"))
+    hotel_id = Column(String, ForeignKey("hotels.id"))
     gross_amount = Column(Float)
     commission_amount = Column(Float)
     net_amount = Column(Float)
-    currency = Column(String(3))
-    status = Column(String, default="pending") # pending, paid
-    payout_id = Column(Integer, ForeignKey("payouts.id"), nullable=True)
+    currency = Column(String(3), default="BTN")
+    status = Column(String, default="PENDING_PAYOUT") # PENDING_PAYOUT, PAID
+    payout_id = Column(String, ForeignKey("payouts.id"), nullable=True)
 
 class Payout(Base):
     __tablename__ = "payouts"
-    id = Column(Integer, primary_key=True, index=True)
-    tenant_id = Column(Integer, ForeignKey("tenants.id"), index=True)
-    amount = Column(Float)
-    currency = Column(String(3))
-    payout_date = Column(DateTime)
-    status = Column(String) # processed, failed
-    reference = Column(String)
+    id = Column(String, primary_key=True)
+    hotel_id = Column(String, ForeignKey("hotels.id"))
+    amount = Column(Float, nullable=False)
+    currency = Column(String(3), default="BTN")
+    status = Column(String, default="PENDING") # PENDING, PROCESSED, FAILED
+    processed_at = Column(DateTime)
+    reference_number = Column(String)
+    created_at = Column(DateTime, default=func.now())
 
 class PaymentProviderRegistry(Base):
     __tablename__ = "payment_provider_registry"
@@ -54,14 +52,3 @@ class PaymentProviderRegistry(Base):
     is_active = Column(Boolean, default=True)
     credentials_encrypted = Column(String) # Encrypted JSON
     settings = Column(JSON) # currencies, min/max limits
-
-class Payout(Base):
-    __tablename__ = "payouts"
-    id = Column(String, primary_key=True)
-    hotel_id = Column(String, ForeignKey("hotels.id"))
-    amount = Column(Float, nullable=False)
-    currency = Column(String, default="BTN")
-    status = Column(String, default="PENDING") # PENDING, PROCESSED, FAILED
-    processed_at = Column(DateTime)
-    reference_number = Column(String)
-    created_at = Column(DateTime, default=func.now())

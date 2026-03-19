@@ -47,3 +47,17 @@ async def get_hotel_route(
         from_lat, from_lng, hotel.lat, hotel.lng
     )
     return route_data
+
+from app.services.recommendations import recommendation_service
+
+@router.get("/recommendations/nearby")
+async def get_nearby_recommendations(
+    lat: float,
+    lng: float,
+    radius: float = 20.0,
+    db: AsyncSession = Depends(get_db)
+):
+    """
+    Returns hotel recommendations based on geo-proximity.
+    """
+    return await recommendation_service.get_nearby_recommendations(db, lat, lng, radius)

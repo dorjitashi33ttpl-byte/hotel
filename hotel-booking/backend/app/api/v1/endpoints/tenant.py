@@ -51,3 +51,16 @@ async def get_room_rack(id: str, start_date: date, db: AsyncSession = Depends(ge
         })
 
     return rack_data
+
+from app.services.analytics import analytics_service
+
+@router.get("/metrics/summary")
+async def get_performance_summary(
+    hotel_id: str,
+    days: int = 30,
+    db: Session = Depends(get_db)
+):
+    """
+    Returns ADR, RevPAR, and occupancy for the tenant.
+    """
+    return analytics_service.get_hotel_metrics(db, hotel_id, days)

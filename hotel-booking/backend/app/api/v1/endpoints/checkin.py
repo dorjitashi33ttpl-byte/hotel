@@ -46,3 +46,20 @@ async def confirm_checkin(
     booking.status = BookingStatus.CHECKED_IN
     db.commit()
     return {"status": "checked_in"}
+
+@router.post("/self-checkout/{booking_id}")
+async def guest_self_checkout(
+    booking_id: int,
+    db: Session = Depends(deps.get_db),
+    current_user = Depends(deps.get_current_active_user)
+):
+    """
+    Allows a guest to initiate checkout from the mobile app.
+    """
+    booking = db.query(Booking).filter(Booking.id == booking_id, Booking.user_id == current_user.id).first()
+    if not booking or booking.status != "CHECKED_IN":
+        raise HTTPException(status_code=400, detail="Invalid booking state for checkout")
+
+    booking.status = "COMPLETED"
+    db.commit()
+    return {"status": "completed", "message": "Thank you for staying with us!"}

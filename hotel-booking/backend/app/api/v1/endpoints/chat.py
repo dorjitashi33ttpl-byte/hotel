@@ -1,18 +1,31 @@
 from fastapi import APIRouter, Depends, HTTPException
-from sqlalchemy.orm import Session
+from sqlalchemy.ext.asyncio import AsyncSession
 from app.api.deps import get_db, get_current_user
-from app.models.chat import ChatMessage
+from app.services.chat import chat_service
 from app.models.user import User
+from typing import List
 
 router = APIRouter()
 
-@router.post("/send")
-async def send_message(tenant_id: int, content: str, db: Session = Depends(get_db), current_user: User = Depends(get_current_user)):
-    msg = ChatMessage(tenant_id=tenant_id, sender_id=current_user.id, content=content)
-    db.add(msg)
-    db.commit()
-    return {"status": "sent"}
+@router.post("/bookings/{booking_id}/messages")
+async def send_message(
+    booking_id: str,
+    content: str,
+    db: AsyncSession = Depends(get_db),
+    current_user: User = Depends(get_current_user)
+):
+    """
+    Sends a message scoped to a booking.
+    """
+    return await chat_service.send_scoped_message(db, booking_id, current_user.id, content)
 
-@router.get("/history")
-async def get_chat_history(tenant_id: int, db: Session = Depends(get_db), current_user: User = Depends(get_current_user)):
-    return db.query(ChatMessage).filter(ChatMessage.tenant_id == tenant_id).order_by(ChatMessage.created_at.desc()).all()
+@router.get("/bookings/{booking_id}/messages")
+async def get_chat_history(
+    booking_id: str,
+    db: AsyncSession = Depends(get_db),
+    current_user: User = Depends(get_current_user)
+):
+    """
+    Retrieves the message history for a booking.
+    """
+    return await chat_service.get_booking_chat(db, booking_id)

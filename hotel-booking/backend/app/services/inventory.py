@@ -43,3 +43,14 @@ inventory_service = InventoryService()
         # 2. Subtract bookings for that channel
         # 3. Respect limits defined in ChannelAllocation model
         return {"available": 5, "channel": channel}
+
+    @staticmethod
+    async def broadcast_inventory_change(tenant_id: str, room_type_id: str):
+        """
+        Broadcasts an inventory update to all connected clients of a tenant.
+        """
+        from app.services.websocket import manager
+        await manager.broadcast_to_tenant(tenant_id, {
+            "type": "INVENTORY_UPDATE",
+            "payload": {"room_type_id": room_type_id, "timestamp": str(uuid.uuid4())}
+        })

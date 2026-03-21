@@ -1,35 +1,36 @@
 import React from 'react';
-import { TrendingUp, TrendingDown, Info } from 'lucide-react';
+import { TrendingUp, Users, DollarSign } from 'lucide-react';
 
-export const PricingInsights: React.FC = () => {
+export const PricingInsights = () => {
   return (
-    <div className="bg-white p-12 border border-stone-100 shadow-sm rounded-3xl space-y-12">
-      <div className="flex justify-between items-center">
-         <h3 className="text-2xl font-serif">Revenue Intelligence</h3>
-         <button className="text-stone-400 hover:text-stone-900 transition-colors"><Info className="w-5 h-5" /></button>
+    <div className="grid grid-cols-1 md:grid-cols-3 gap-12">
+      <div className="space-y-6">
+         <div className="flex items-center gap-3 text-[10px] font-black uppercase text-stone-400">
+            <TrendingUp className="w-4 h-4 text-gold" />
+            ADR
+         </div>
+         <p className="text-4xl font-serif">Nu. 14,500</p>
+         <p className="text-[10px] text-green-600 font-bold uppercase tracking-widest">+12% vs last month</p>
       </div>
 
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
-         {[
-           { label: "RevPAR", value: "BTN 8,440", change: "+12.4%", trend: "up" },
-           { label: "Occupancy", value: "84%", change: "+5.2%", trend: "up" },
-           { label: "ADR", value: "BTN 10,200", change: "-1.2%", trend: "down" }
-         ].map(stat => (
-           <div key={stat.label} className="p-8 bg-stone-50 border border-stone-100 rounded-2xl">
-              <span className="text-[10px] font-black uppercase tracking-widest text-stone-400 block mb-6">{stat.label}</span>
-              <div className="flex items-baseline gap-4">
-                 <span className="text-3xl font-serif tracking-tighter">{stat.value}</span>
-                 <span className={`flex items-center gap-1 text-[9px] font-black ${stat.trend === 'up' ? 'text-green-500' : 'text-red-500'}`}>
-                    {stat.trend === 'up' ? <TrendingUp className="w-3 h-3" /> : <TrendingDown className="w-3 h-3" />}
-                    {stat.change}
-                 </span>
-              </div>
-           </div>
-         ))}
+      <div className="space-y-6">
+         <div className="flex items-center gap-3 text-[10px] font-black uppercase text-stone-400">
+            <Users className="w-4 h-4 text-gold" />
+            Occupancy
+         </div>
+         <p className="text-4xl font-serif">84.2%</p>
+         <div className="w-full bg-stone-100 h-1.5 rounded-full overflow-hidden">
+            <div className="bg-stone-900 h-full w-[84%]" />
+         </div>
       </div>
 
-      <div className="h-48 bg-stone-50 rounded-2xl flex items-center justify-center border-2 border-dashed border-stone-100 text-stone-300 font-serif text-xl italic">
-         Demand Forecasting Visualization (WIP)
+      <div className="space-y-6">
+         <div className="flex items-center gap-3 text-[10px] font-black uppercase text-stone-400">
+            <DollarSign className="w-4 h-4 text-gold" />
+            RevPAR
+         </div>
+         <p className="text-4xl font-serif">Nu. 12,209</p>
+         <p className="text-[10px] text-stone-400 font-bold uppercase tracking-widest italic">Forecasted: Nu. 13k</p>
       </div>
     </div>
   );

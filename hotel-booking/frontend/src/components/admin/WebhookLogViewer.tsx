@@ -1,36 +1,29 @@
 import React from 'react';
 import { DataTable } from './framework/DataTable';
-import { StatusBadge } from './framework/StatusBadge';
-import { Eye } from 'lucide-react';
 
-export const WebhookLogViewer: React.FC = () => {
+export const WebhookLogViewer = () => {
   const columns = [
-    { key: 'id', header: 'ID' },
-    { key: 'target', header: 'Partner App / Gateway' },
-    { key: 'event', header: 'Event Type' },
-    { key: 'attempts', header: 'Retry Count' },
+    { header: 'Event', accessor: 'event_type' },
+    { header: 'Partner', accessor: 'partner_name' },
     {
-      key: 'status',
-      header: 'Delivery Status',
-      render: (val: string) => <StatusBadge status={val} />
+      header: 'Status',
+      accessor: 'status_code',
+      render: (val: number) => (
+        <span className={`px-2 py-1 text-[9px] font-black ${val >= 200 && val < 300 ? 'bg-green-100 text-green-700' : 'bg-red-100 text-red-700'}`}>
+          {val}
+        </span>
+      )
     },
-    { key: 'timestamp', header: 'Last Attempt' },
-  ];
-
-  const mockData = [
-    { id: 'WH-8821', target: 'Stripe Connect', event: 'payment.succeeded', attempts: 1, status: 'Success', timestamp: '2026-06-01 14:22:01' },
-    { id: 'WH-8819', target: 'Agoda Partner API', event: 'booking.confirmed', attempts: 3, status: 'Failed', timestamp: '2026-06-01 14:15:44' },
-    { id: 'WH-8815', target: 'Razorpay Webhook', event: 'refund.processed', attempts: 1, status: 'Success', timestamp: '2026-06-01 14:05:12' },
+    { header: 'Latency', accessor: 'duration_ms', render: (val: number) => `${val}ms` },
+    { header: 'Time', accessor: 'created_at' },
   ];
 
   return (
-    <div className="space-y-12">
+    <div className="p-8">
+      <h1 className="text-2xl font-serif mb-8">Partner Webhook Chronicles</h1>
       <DataTable
-        title="Webhook Chronicles"
-        description="Monitor the synchronization state between our sanctuary and external realms."
         columns={columns}
-        data={mockData}
-        onView={(log) => alert('Inspecting Raw JSON for ' + log.id)}
+        endpoint="/admin/partner/webhook-logs"
       />
     </div>
   );

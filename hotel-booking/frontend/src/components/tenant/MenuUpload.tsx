@@ -1,22 +1,29 @@
-import React, { useState } from 'react';
+import React from 'react';
+import { FileText, Upload } from 'lucide-react';
 
-export const MenuUpload: React.FC = () => {
-  const [file, setFile] = useState<File | null>(null);
-
+export const MenuUpload = () => {
   return (
-    <div className="p-8 bg-blue-50 border border-blue-100 rounded-2xl">
-      <h2 className="text-xl font-bold text-blue-900 mb-2">Property Menu (PDF)</h2>
-      <p className="text-sm text-blue-600 mb-6">Upload your latest menu to be attached to booking confirmation emails.</p>
+    <div className="p-8 border border-dashed border-stone-200 bg-stone-50 rounded-2xl flex flex-col items-center text-center">
+       <div className="w-16 h-16 bg-white rounded-full flex items-center justify-center mb-6 shadow-sm">
+          <FileText className="w-8 h-8 text-gold" />
+       </div>
+       <h4 className="text-sm font-bold uppercase tracking-widest text-stone-900 mb-2">Property Menu PDF</h4>
+       <p className="text-xs text-stone-400 mb-8 max-w-[200px]">Upload your seasonal menu to be included in guest confirmation emails.</p>
 
-      <div className="flex items-center gap-4">
-        <label className="bg-white border-2 border-dashed border-blue-300 p-8 rounded-xl flex-1 text-center cursor-pointer hover:bg-blue-100 transition-colors">
-          <input type="file" className="hidden" onChange={(e) => setFile(e.target.files?.[0] || null)} />
-          <span className="text-blue-500 font-bold">{file ? file.name : 'Choose PDF File'}</span>
-        </label>
-        <button className="bg-blue-600 text-white px-8 py-8 rounded-xl font-bold hover:bg-blue-700 disabled:opacity-50" disabled={!file}>
-          Upload
-        </button>
-      </div>
+       <button className="flex items-center gap-3 bg-stone-900 text-white px-8 py-3 text-[10px] font-bold uppercase tracking-widest hover:bg-gold transition-all">
+          <Upload className="w-4 h-4" />
+          Choose File
+       </button>
+
+       <div className="mt-8 pt-8 border-t border-stone-100 w-full">
+          <div className="flex justify-between items-center text-left">
+             <div>
+                <p className="text-xs font-medium">summer_experience_2026.pdf</p>
+                <p className="text-[9px] text-stone-400 uppercase font-black">Uploaded 2 days ago</p>
+             </div>
+             <button className="text-[9px] font-black text-red-400 uppercase">Remove</button>
+          </div>
+       </div>
     </div>
   );
 };

@@ -6,6 +6,7 @@ import { Navbar } from './components/common/Navbar';
 import { FadeIn } from './components/common/FadeIn';
 import { TenantDashboard } from './pages/TenantDashboard';
 import { BookingFlow } from './pages/BookingFlow';
+import { AdminDashboard } from './pages/admin/AdminDashboard';
 
 const queryClient = new QueryClient();
 
@@ -41,6 +42,7 @@ function App() {
             <Route path="/" element={<Landing />} />
             <Route path="/tenant/*" element={<TenantDashboard />} />
             <Route path="/hotel/:id/book" element={<BookingFlow hotelId={1} roomTypeId={1} />} />
+<Route path="/admin/*" element={<AdminDashboard />} />
           </Routes>
         </main>
       </BrowserRouter>

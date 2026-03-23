@@ -58,3 +58,16 @@ async def process_booking_confirmation(db: Session, booking_id: str, ip_address:
 
     await db.commit()
     return {"status": "confirmed"}
+
+from app.services.webhooks import webhook_orchestrator
+
+async def trigger_booking_webhooks(db: Session, booking: Booking, event: str):
+    """
+    Convenience method to trigger webhooks for booking events.
+    """
+    await webhook_orchestrator.trigger_event(
+        db,
+        booking.hotel_id,
+        event,
+        {"booking_id": booking.id, "status": booking.status}
+    )

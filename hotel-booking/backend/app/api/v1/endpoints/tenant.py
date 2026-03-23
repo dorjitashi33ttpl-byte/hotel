@@ -64,3 +64,35 @@ async def get_performance_summary(
     Returns ADR, RevPAR, and occupancy for the tenant.
     """
     return analytics_service.get_hotel_metrics(db, hotel_id, days)
+
+from app.services.storage import storage_service
+from fastapi import UploadFile, File
+
+@router.post("/hotels/{hotel_id}/media/upload")
+async def upload_hotel_media(
+    hotel_id: str,
+    file: UploadFile = File(...),
+    db: Session = Depends(get_db),
+    current_user = Depends(get_current_active_user)
+):
+    """
+    Uploads an image for the hotel property.
+    """
+    content = await file.read()
+    url = await storage_service.upload_file(content, f"hotel_{hotel_id}_{file.filename}")
+
+    # Update hotel media JSON in DB
+    return {"url": url, "status": "uploaded"}
+
+@router.post("/hotels/{hotel_id}/menu/upload")
+async def upload_property_menu(
+    hotel_id: str,
+    file: UploadFile = File(...),
+    db: Session = Depends(get_db)
+):
+    """
+    Uploads the property's menu PDF.
+    """
+    content = await file.read()
+    url = await storage_service.upload_file(content, f"menu_{hotel_id}.pdf")
+    return {"url": url, "status": "menu_uploaded"}

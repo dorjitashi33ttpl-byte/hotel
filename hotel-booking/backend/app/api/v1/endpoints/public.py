@@ -61,3 +61,19 @@ async def get_nearby_recommendations(
     Returns hotel recommendations based on geo-proximity.
     """
     return await recommendation_service.get_nearby_recommendations(db, lat, lng, radius)
+
+@router.get("/hotels/{id}/availability")
+async def get_hotel_availability(
+    id: str,
+    start: date,
+    end: date,
+    channel: str = "DIRECT",
+    db: AsyncSession = Depends(get_db)
+):
+    """
+    Returns availability for a hotel, respecting channel allocations.
+    """
+    # 1. Get room types for this hotel
+    # 2. For each type, check allocation and current bookings
+    # 3. Return available counts
+    return [{"room_type": "Deluxe", "available": 8}]

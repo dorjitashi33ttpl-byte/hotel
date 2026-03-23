@@ -35,3 +35,13 @@ async def invalidate_tenant_cache(tenant_id: str):
     keys = await redis_client.keys(pattern)
     if keys:
         await redis_client.delete(*keys)
+
+async def invalidate_inventory_cache():
+    """
+    Clears all search-related cache keys.
+    In production, this would be more targeted.
+    """
+    pattern = "search_cache:*"
+    keys = await redis_client.keys(pattern)
+    if keys:
+        await redis_client.delete(*keys)

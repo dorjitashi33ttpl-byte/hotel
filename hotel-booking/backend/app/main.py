@@ -7,6 +7,7 @@ from prometheus_client import make_asgi_app
 from app.core.config import settings
 from app.core.logging import setup_logging
 from app.core.rate_limit import rate_limit_middleware, partner_quota_middleware
+from app.core.idempotency import idempotency_middleware
 from app.core.security_headers import SecurityHeadersMiddleware
 from app.api.v1.endpoints import (
     public, admin, tenant, partner, checkin, walkin, calendar, chat, auth, ws
@@ -25,6 +26,10 @@ app.add_middleware(SecurityHeadersMiddleware)
 @app.middleware("http")
 @app.middleware("http")
 async def partner_quota_wrapper(request: Request, call_next):
+@app.middleware("http")
+async def idempotency_wrapper(request: Request, call_next):
+    return await idempotency_middleware(request, call_next)
+
     return await partner_quota_middleware(request, call_next)
 
 async def rate_limit_wrapper(request: Request, call_next):

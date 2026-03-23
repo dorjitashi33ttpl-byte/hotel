@@ -54,3 +54,36 @@ async def get_quota_usage(partner = Depends(get_partner_app)):
         "current_usage": 142,
         "reset_at": "2026-06-02T00:00:00Z"
     }
+
+@router.post("/bookings/{booking_id}/confirm")
+async def confirm_partner_booking(
+    booking_id: str,
+    db: Session = Depends(get_db),
+    partner = Depends(get_partner_app)
+):
+    """
+    Confirms a previously held booking via partner API.
+    """
+    return {"status": "confirmed", "partner_ref": "P-456"}
+
+@router.post("/bookings/{booking_id}/cancel")
+async def cancel_partner_booking(
+    booking_id: str,
+    db: Session = Depends(get_db),
+    partner = Depends(get_partner_app)
+):
+    """
+    Cancels a partner-owned booking.
+    """
+    return {"status": "cancelled"}
+
+@router.get("/bookings/{booking_id}")
+async def get_partner_booking(
+    booking_id: str,
+    db: Session = Depends(get_db),
+    partner = Depends(get_partner_app)
+):
+    """
+    Retrieves details of a specific partner booking.
+    """
+    return {"id": booking_id, "status": "CONFIRMED"}

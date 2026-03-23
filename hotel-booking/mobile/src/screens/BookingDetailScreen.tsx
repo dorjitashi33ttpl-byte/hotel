@@ -67,10 +67,10 @@ export const BookingDetailScreen = ({ navigation }: any) => {
          </TouchableOpacity>
 
          <TouchableOpacity style={styles.actionBtn} activeOpacity={0.6}>
-            <Text style={styles.actionText}>Request Housekeeping</Text>
+            <Text style={styles.actionText} onPress={() => navigation.navigate('ServiceRequest')}>Request Housekeeping</Text>
          </TouchableOpacity>
          <TouchableOpacity style={styles.actionBtn} activeOpacity={0.6}>
-            <Text style={styles.actionText}>Chat with Concierge</Text>
+            <Text style={styles.actionText} onPress={() => navigation.navigate('PreArrival')}>Pre-Arrival Form</Text>
          </TouchableOpacity>
 
          <View style={styles.checkoutBox}>

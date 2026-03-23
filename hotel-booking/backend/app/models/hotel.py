@@ -22,6 +22,7 @@ class Hotel(Base):
     amenities = Column(JSON)
     media = Column(JSON)
     policies = Column(JSON)
+    status = Column(String, default='PENDING_APPROVAL') # PENDING_APPROVAL, APPROVED, REJECTED
 
 class RoomType(Base):
     __tablename__ = "room_types"

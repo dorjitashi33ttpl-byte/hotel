@@ -40,3 +40,13 @@ async def verify_pre_arrival_and_checkin(db: Session, booking_id: str):
     booking.status = "CHECKED_IN"
     db.commit()
     return {"status": "success", "message": "Checked in successfully"}
+
+@router.post("/lock-system/validate")
+async def validate_digital_key(token: str):
+    """
+    Simulated endpoint for physical lock systems to validate the guest's QR token.
+    """
+    # 1. Decode token
+    # 2. Verify expiry and signature
+    # 3. Return room access status
+    return {"authorized": True, "room": "104"}

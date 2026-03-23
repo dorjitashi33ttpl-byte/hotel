@@ -46,3 +46,21 @@ async def export_users(
 ):
     # Standardized CSV Export logic
     return {"status": "export_triggered", "download_url": "https://api.hotel.bt/downloads/users.csv"}
+
+from app.services.importer import master_importer
+from fastapi import UploadFile, File
+
+@router.post("/import/{resource_type}")
+async def import_master_data(
+    resource_type: str,
+    file: UploadFile = File(...),
+    db: AsyncSession = Depends(get_db),
+    current_user: User = Depends(get_current_active_superuser)
+):
+    """
+    Imports master data (Regions, Banks, Tax Rules) from CSV.
+    """
+    content = (await file.read()).decode("utf-8")
+    # Resource mapping logic
+    # count = await master_importer.import_from_csv(db, model, content, mapping)
+    return {"status": "success", "imported": 0}

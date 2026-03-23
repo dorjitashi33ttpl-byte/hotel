@@ -1,28 +1,63 @@
-import React from 'react';
+import React, { useState } from 'react';
+import { Settings, Shield, Globe, Save } from 'lucide-react';
 
-export const BankTemplateConfig: React.FC = () => {
+export const BankTemplateConfig = () => {
+  const [template, setTemplate] = useState({
+    bankName: 'Bank of Bhutan (BoB)',
+    redirectUrl: 'https://payment.bob.bt/pay',
+    method: 'POST',
+    hmacKey: '••••••••••••••••',
+    bodyTemplate: '{"booking_id": "{{booking_id}}", "amount": {{amount}}, "token": "{{secret}}"}'
+  });
+
   return (
-    <div className="bg-gray-900 text-white p-12 rounded-[40px] shadow-2xl mt-12">
-      <h2 className="text-3xl font-black mb-8">Local Bank Template Engine</h2>
-      <div className="space-y-8 max-w-3xl">
-        <div className="grid grid-cols-2 gap-8">
-           <div className="flex flex-col gap-2">
-             <label className="text-[10px] font-black uppercase text-gray-500 tracking-widest">Redirect URL</label>
-             <input className="bg-gray-800 p-4 rounded-2xl outline-none focus:ring-2 ring-blue-500" defaultValue="https://bnb.bt/pay" />
-           </div>
-           <div className="flex flex-col gap-2">
-             <label className="text-[10px] font-black uppercase text-gray-500 tracking-widest">Signature Method</label>
-             <select className="bg-gray-800 p-4 rounded-2xl outline-none">
-               <option>HMAC-SHA256</option>
-               <option>RSA-SHA256</option>
-             </select>
-           </div>
+    <div className="p-12 max-w-4xl">
+      <div className="flex justify-between items-end mb-12">
+        <div>
+           <span className="text-[10px] font-bold uppercase tracking-[0.5em] text-gold block mb-4">Payment Orchestration</span>
+           <h1 className="text-4xl font-serif">Local Bank Template Engine</h1>
         </div>
-        <div className="flex flex-col gap-2">
-           <label className="text-[10px] font-black uppercase text-gray-500 tracking-widest">Parameter Mapping (JSON)</label>
-           <textarea className="bg-gray-800 p-6 rounded-2xl outline-none h-32 font-mono text-sm" defaultValue='{ "booking_id": "ref", "amount": "amt" }' />
-        </div>
-        <button className="bg-blue-600 px-8 py-4 rounded-2xl font-black shadow-xl shadow-blue-900/40">Save Engine Config</button>
+        <button className="flex items-center gap-3 bg-stone-900 text-white px-8 py-4 text-[10px] font-bold uppercase tracking-widest hover:bg-gold transition-all duration-500">
+           <Save className="w-4 h-4" /> Save Configuration
+        </button>
+      </div>
+
+      <div className="grid grid-cols-1 gap-12">
+         <section className="bg-white p-10 border border-stone-100 shadow-sm space-y-8">
+            <div className="flex items-center gap-4 border-b border-stone-50 pb-6">
+               <Globe className="w-5 h-5 text-stone-300" />
+               <h3 className="text-sm font-bold uppercase tracking-widest">Gateway Endpoints</h3>
+            </div>
+
+            <div className="grid grid-cols-2 gap-8">
+               <div className="space-y-2">
+                  <label className="text-[10px] font-black uppercase text-stone-400">Bank Name</label>
+                  <input value={template.bankName} className="w-full border-stone-200 p-3 text-sm focus:border-gold outline-none" />
+               </div>
+               <div className="space-y-2">
+                  <label className="text-[10px] font-black uppercase text-stone-400">Redirect URL</label>
+                  <input value={template.redirectUrl} className="w-full border-stone-200 p-3 text-sm font-mono focus:border-gold outline-none" />
+               </div>
+            </div>
+         </section>
+
+         <section className="bg-white p-10 border border-stone-100 shadow-sm space-y-8">
+            <div className="flex items-center gap-4 border-b border-stone-50 pb-6">
+               <Shield className="w-5 h-5 text-stone-300" />
+               <h3 className="text-sm font-bold uppercase tracking-widest">Security & Signature</h3>
+            </div>
+
+            <div className="space-y-6">
+               <div className="space-y-2">
+                  <label className="text-[10px] font-black uppercase text-stone-400">HMAC Shared Secret</label>
+                  <input type="password" value={template.hmacKey} className="w-full border-stone-200 p-3 text-sm focus:border-gold outline-none" />
+               </div>
+               <div className="space-y-2">
+                  <label className="text-[10px] font-black uppercase text-stone-400">Payload Template (Jinja2)</label>
+                  <textarea rows={4} value={template.bodyTemplate} className="w-full border-stone-200 p-4 text-xs font-mono bg-stone-50 focus:border-gold outline-none" />
+               </div>
+            </div>
+         </section>
       </div>
     </div>
   );

@@ -31,3 +31,30 @@ class BookingService:
         return hold
 
 booking_service = BookingService()
+
+from app.services.fraud import fraud_service
+from app.services.commission import commission_service
+
+async def process_booking_confirmation(db: Session, booking_id: str, ip_address: str):
+    """
+    Finalizes a booking after payment success.
+    Runs fraud checks, updates status, and records commission.
+    """
+    booking = await db.get(Booking, booking_id)
+    if not booking: return None
+
+    # 1. Fraud Risk Assessment
+    risk = await fraud_service.assess_risk(db, booking.user_id, ip_address, booking.total_price)
+    if risk["decision"] == "REJECT":
+        booking.status = "FLAGGED_FOR_FRAUD"
+        await db.commit()
+        return {"status": "flagged", "reason": risk["reasons"]}
+
+    # 2. Confirm Booking
+    booking.status = "CONFIRMED"
+
+    # 3. Process Commission
+    await commission_service.process_booking_commission(db, booking)
+
+    await db.commit()
+    return {"status": "confirmed"}

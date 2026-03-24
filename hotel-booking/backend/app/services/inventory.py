@@ -1,56 +1,56 @@
 from sqlalchemy.orm import Session
 from sqlalchemy import select, and_, func
-from app.models.inventory import Room, BookingInventory, ChannelConfig, RoomType
-from datetime import date
+from app.models.hotel import Room, Booking, RoomType, ChannelAllocation
+from datetime import date, timedelta
 from typing import List, Optional
 
 class InventoryService:
     @staticmethod
-    async def check_channel_allocation(db: Session, hotel_id: int, channel: str, quantity: int) -> bool:
-        config = db.query(ChannelConfig).filter(ChannelConfig.hotel_id == hotel_id, ChannelConfig.channel_name == channel).first()
-        if not config or not config.is_active: return True
+    async def get_available_quantity(db: Session, room_type_id: str, start_date: date, end_date: date, channel: str = "DIRECT") -> int:
+        """
+        Calculates available quantity, respecting channel allocations.
+        """
+        room_type = await db.get(RoomType, room_type_id)
+        if not room_type: return 0
 
-        # Check if channel has enough allocated rooms
-        total_rooms = db.query(func.count(Room.id)).filter(Room.hotel_id == hotel_id).scalar()
-        max_allocated = int(total_rooms * (config.allocation_percentage / 100))
+        # 1. Check channel-specific limit
+        alloc = db.query(ChannelAllocation).filter(
+            ChannelAllocation.room_type_id == room_type_id,
+            ChannelAllocation.channel == channel
+        ).first()
 
-        return quantity <= max_allocated
+        limit = alloc.allocated_quantity if alloc else room_type.total_quantity
+
+        # 2. Count existing bookings for this channel
+        # (In a real system, we'd check availability across all channels to prevent overbooking total capacity)
+        stmt = select(func.count(Booking.id)).where(
+            Booking.room_type_id == room_type_id,
+            Booking.status != "CANCELLED",
+            and_(
+                Booking.check_in < end_date,
+                Booking.check_out > start_date
+            )
+        )
+        booked_count = await db.scalar(stmt)
+
+        return max(0, min(limit, room_type.total_quantity) - booked_count)
 
     @staticmethod
-    async def get_available_rooms(db: Session, hotel_id: int, start_date: date, end_date: date, room_type_id: Optional[int] = None) -> List[Room]:
-        booked_rooms_stmt = select(BookingInventory.room_id).where(
-            and_(BookingInventory.date >= start_date, BookingInventory.date < end_date)
+    async def get_available_room_numbers(db: Session, room_type_id: str, start_date: date, end_date: date) -> List[Room]:
+        all_rooms_stmt = select(Room).where(Room.room_type_id == room_type_id, Room.is_maintenance == False)
+        all_rooms = (await db.execute(all_rooms_stmt)).scalars().all()
+
+        booked_room_ids_stmt = select(Booking.room_id).where(
+            Booking.room_type_id == room_type_id,
+            Booking.room_id != None,
+            Booking.status != "CANCELLED",
+            and_(
+                Booking.check_in < end_date,
+                Booking.check_out > start_date
+            )
         )
+        booked_room_ids = (await db.execute(booked_room_ids_stmt)).scalars().all()
 
-        query = select(Room).where(
-            and_(Room.hotel_id == hotel_id, Room.is_active == True, Room.id.not_in(booked_rooms_stmt))
-        )
-
-        if room_type_id:
-            query = query.where(Room.room_type_id == room_type_id)
-
-        result = db.execute(query)
-        return result.scalars().all()
+        return [r for r in all_rooms if r.id not in booked_room_ids]
 
 inventory_service = InventoryService()
-
-    @staticmethod
-    async def get_allocation_aware_availability(db: Session, room_type_id: str, channel: str):
-        """
-        Returns available quantity for a specific room type and channel.
-        """
-        # 1. Get base inventory
-        # 2. Subtract bookings for that channel
-        # 3. Respect limits defined in ChannelAllocation model
-        return {"available": 5, "channel": channel}
-
-    @staticmethod
-    async def broadcast_inventory_change(tenant_id: str, room_type_id: str):
-        """
-        Broadcasts an inventory update to all connected clients of a tenant.
-        """
-        from app.services.websocket import manager
-        await manager.broadcast_to_tenant(tenant_id, {
-            "type": "INVENTORY_UPDATE",
-            "payload": {"room_type_id": room_type_id, "timestamp": str(uuid.uuid4())}
-        })

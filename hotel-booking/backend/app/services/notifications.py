@@ -38,6 +38,7 @@ class NotificationService:
             "booking_id": booking.id,
             "hotel_name": hotel.name,
             "hotel_address": f"{hotel.city}, Bhutan",
+            "shift_update": True if context.get('is_shift_change') else False,
             "on_shift_staff": staff,
             "menu_url": menu_url
         }
@@ -50,3 +51,21 @@ class NotificationService:
         )
 
 notification_service = NotificationService()
+
+import hmac
+import hashlib
+import time
+
+def generate_signed_menu_url(hotel_id: str, expires_in: int = 3600):
+    """
+    Generates a secure, time-limited URL for a hotel's menu PDF.
+    """
+    expires_at = int(time.time()) + expires_in
+    message = f"{hotel_id}:{expires_at}"
+    signature = hmac.new(
+        settings.SECRET_KEY.encode(),
+        message.encode(),
+        hashlib.sha256
+    ).hexdigest()
+
+    return f"{settings.API_V1_STR}/public/hotels/{hotel_id}/menu/download?expires={expires_at}&signature={signature}"

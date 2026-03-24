@@ -1,41 +1,35 @@
 import React from 'react';
-import { motion } from 'framer-motion';
+import { FadeIn } from '../components/common/FadeIn';
 
 export const WellnessPage = () => {
   return (
-    <div className="bg-stone-900 text-white min-h-screen">
-      <section className="pt-48 pb-48 px-6">
-        <div className="max-w-7xl mx-auto grid grid-cols-1 lg:grid-cols-12 gap-24 items-center">
-          <div className="lg:col-span-5">
-             <span className="text-[10px] font-bold uppercase tracking-[0.8em] text-stone-500 block mb-8">Rejuvenation</span>
-             <h1 className="text-7xl md:text-9xl font-serif tracking-tighter italic">Wellness</h1>
-             <p className="mt-12 text-stone-400 font-light text-xl leading-relaxed">
-               Drawing inspiration from ancient Tibetan medicine and Bhutanese rituals, our sanctuary offers a profound return to oneself.
-             </p>
-          </div>
-          <div className="lg:col-span-7">
-             <div className="aspect-[3/4] overflow-hidden shadow-2xl">
-                <img src="https://images.unsplash.com/photo-1544124499-58912cbddaad?w=1200" className="w-full h-full object-cover opacity-80" />
-             </div>
-          </div>
-        </div>
-      </section>
+    <div className="bg-[var(--luxury-stone)] min-h-screen pt-32">
+      <section className="py-48 px-12 max-w-7xl mx-auto">
+         <div className="text-center mb-32">
+            <FadeIn>
+               <span className="text-[10px] font-bold uppercase tracking-[0.5em] text-gold mb-6 block">Revitalize</span>
+               <h1 className="text-7xl font-serif tracking-tighter mb-12 leading-tight">A Sanctuary for <br/><span className="italic">Mind, Body & Spirit</span></h1>
+            </FadeIn>
+         </div>
 
-      <section className="py-48 px-6 bg-stone-800/30">
-         <div className="max-w-7xl mx-auto text-center">
-            <h2 className="text-5xl font-serif mb-24 tracking-tighter">The Rituals</h2>
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-24">
-               {[
-                 { name: "Hot Stone Bath", desc: "Mineral-rich river stones released into herb-infused mountain water." },
-                 { name: "Meditation Hall", desc: "A silent space overlooking the pine forests for deep contemplation." },
-                 { name: "Yoga Pavilion", desc: "Morning sun salutations amidst the morning mountain mist." }
-               ].map(r => (
-                 <div key={r.name} className="space-y-6">
-                    <h3 className="text-xl font-serif text-gold italic">{r.name}</h3>
-                    <p className="text-stone-400 font-light leading-relaxed">{r.desc}</p>
+         <div className="grid grid-cols-1 lg:grid-cols-3 gap-16">
+            {[
+              { name: 'Ancient Rituals', img: 'https://images.unsplash.com/photo-1544161515-4ab6ce6db874?w=600', desc: 'Bhutanese hot stone baths and herbal compress therapies.' },
+              { name: 'Yoga Shala', img: 'https://images.unsplash.com/photo-1545201071-75f058a69418?w=600', desc: 'Morning meditation overlooking the misty Himalayan peaks.' },
+              { name: 'Thermal Suites', img: 'https://images.unsplash.com/photo-1596178065887-1198b6148b2b?w=600', desc: 'Experience the healing power of water and steam in our state-of-the-art facilities.' }
+            ].map((s, i) => (
+              <FadeIn key={s.name} delay={i * 0.2}>
+                 <div className="space-y-10 group cursor-pointer">
+                    <div className="aspect-[4/5] overflow-hidden gold-border bg-stone-200">
+                       <img src={s.img} className="w-full h-full object-cover grayscale group-hover:grayscale-0 group-hover:scale-105 transition-all duration-1000" />
+                    </div>
+                    <div>
+                       <h3 className="text-2xl font-serif mb-4 italic">{s.name}</h3>
+                       <p className="text-stone-500 text-sm font-light leading-relaxed">{s.desc}</p>
+                    </div>
                  </div>
-               ))}
-            </div>
+              </FadeIn>
+            ))}
          </div>
       </section>
     </div>

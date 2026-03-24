@@ -19,6 +19,7 @@ import { DirectionsScreen } from './src/screens/DirectionsScreen';
 import { ServiceRequestScreen } from './src/screens/ServiceRequestScreen';
 import { PreArrivalScreen } from './src/screens/PreArrivalScreen';
 import { DigitalKeyScreen } from './src/screens/DigitalKeyScreen';
+import { ChatScreen } from './src/screens/ChatScreen';
 
 const Stack = createNativeStackNavigator();
 const Tab = createBottomTabNavigator();
@@ -71,6 +72,7 @@ function NavigationRoot() {
 <Stack.Screen name="ServiceRequest" component={ServiceRequestScreen} options={{ presentation: 'modal', headerShown: false }} />
 <Stack.Screen name="PreArrival" component={PreArrivalScreen} options={{ title: 'Pre-Arrival' }} />
 <Stack.Screen name="DigitalKey" component={DigitalKeyScreen} options={{ presentation: 'transparentModal', headerShown: false }} />
+<Stack.Screen name="Chat" component={ChatScreen} options={{ headerShown: false }} />
       </Stack.Navigator>
     </NavigationContainer>
   );

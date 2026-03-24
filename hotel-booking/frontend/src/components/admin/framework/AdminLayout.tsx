@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import { Link, useLocation } from 'react-router-dom';
 import {
-  Users, Shield, Lock, Settings, Percent, Database,
+  Users, Shield, ShieldAlert, Lock, Settings, Percent, Database,
   Activity, LayoutDashboard, ChevronDown, Menu, X,
   FileText, CreditCard, Map, Building, Star, CheckSquare,
   ChevronRight
@@ -13,6 +13,7 @@ const navGroups = [
     title: "User & Access",
     icon: <Users className="w-5 h-5" />,
     items: [
+      { name: "Fraud Radar", path: "/admin/fraud", icon: <ShieldAlert className="w-4 h-4" /> },
       { name: "Users", path: "/admin/users", icon: <Users className="w-4 h-4" /> },
       { name: "Roles", path: "/admin/roles", icon: <Shield className="w-4 h-4" /> },
       { name: "Permissions", path: "/admin/permissions", icon: <Lock className="w-4 h-4" /> },
@@ -22,6 +23,7 @@ const navGroups = [
     title: "Operations",
     icon: <Building className="w-5 h-5" />,
     items: [
+      { name: "Fraud Radar", path: "/admin/fraud", icon: <ShieldAlert className="w-4 h-4" /> },
       { name: "Approvals", path: "/admin/approvals", icon: <CheckSquare className="w-4 h-4" /> },
       { name: "Reviews", path: "/admin/reviews", icon: <Star className="w-4 h-4" /> },
     ]
@@ -30,6 +32,7 @@ const navGroups = [
     title: "Configuration",
     icon: <Settings className="w-5 h-5" />,
     items: [
+      { name: "Fraud Radar", path: "/admin/fraud", icon: <ShieldAlert className="w-4 h-4" /> },
       { name: "Tax Rules", path: "/admin/tax", icon: <Percent className="w-4 h-4" /> },
       { name: "Payments", path: "/admin/payments", icon: <CreditCard className="w-4 h-4" /> },
       { name: "Mapbox Keys", path: "/admin/mapbox", icon: <Map className="w-4 h-4" /> },
@@ -40,6 +43,7 @@ const navGroups = [
     title: "Masters",
     icon: <Database className="w-5 h-5" />,
     items: [
+      { name: "Fraud Radar", path: "/admin/fraud", icon: <ShieldAlert className="w-4 h-4" /> },
       { name: "Countries", path: "/admin/countries", icon: <Database className="w-4 h-4" /> },
       { name: "Regions", path: "/admin/regions", icon: <Database className="w-4 h-4" /> },
     ]
@@ -48,6 +52,7 @@ const navGroups = [
     title: "Chronicles",
     icon: <FileText className="w-5 h-5" />,
     items: [
+      { name: "Fraud Radar", path: "/admin/fraud", icon: <ShieldAlert className="w-4 h-4" /> },
       { name: "Audit Logs", path: "/admin/audit", icon: <Activity className="w-4 h-4" /> },
       { name: "Webhooks", path: "/admin/webhook-logs", icon: <FileText className="w-4 h-4" /> },
     ]

@@ -1,15 +1,20 @@
-# Hotel Booking SaaS - Frontend
+# 🏔 Hotel Masterpiece SaaS - Luxury Guest & Enterprise Admin
 
-React + TypeScript + TailwindCSS web application.
+A cinematic, high-fidelity React application designed for the ultimate luxury hotel experience.
 
-## Setup
-1. Copy `.env.example` to `.env`
-2. Install dependencies: `npm install`
-3. Start development server: `npm run dev`
-4. Build for production: `npm run build`
+## ✨ Highlights
+- **Wix wh-1038 Inspired Design**: Parallax storytelling, ultra-large serif typography (Playfair Display).
+- **Immersive Showcases**: High-fidelity pages for Suites, Dining (Farm-to-Table), and Wellness (Himalayan Spa).
+- **Enterprise Admin**: Professional CRUD framework with DataTables, grouped sidebars, and Entity Drawers.
+- **Real-time Ops**: Live Room Rack grids and interactive Housekeeping dashboards for staff.
 
-## Features
-- Mapbox GL integration
-- Admin & Tenant dashboards
-- Dynamic booking flow
-- Multi-currency support
+## 🛠 Tech Stack
+- **Core**: React 18, TypeScript, TailwindCSS
+- **State/Data**: React Query (Caching), Framer Motion (Animations)
+- **Icons**: Lucide React
+- **Maps**: Mapbox GL JS
+
+## 📦 Local Setup
+1. `npm install`
+2. `cp .env.example .env`
+3. `npm run dev`

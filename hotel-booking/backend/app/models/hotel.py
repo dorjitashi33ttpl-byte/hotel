@@ -1,5 +1,6 @@
-from sqlalchemy import Column, String, Integer, Float, Boolean, ForeignKey, JSON, Date, Table, DateTime, func
+from sqlalchemy import Column, String, Integer, Float, Boolean, ForeignKey, JSON, Date, DateTime, func
 from sqlalchemy.orm import relationship
+from geoalchemy2 import Geometry
 from .base import Base
 
 class Tenant(Base):
@@ -19,10 +20,12 @@ class Hotel(Base):
     city = Column(String)
     lat = Column(Float)
     lng = Column(Float)
+    geom = Column(Geometry(geometry_type='POINT', srid=4326))
     amenities = Column(JSON)
     media = Column(JSON)
     policies = Column(JSON)
-    status = Column(String, default='PENDING_APPROVAL') # PENDING_APPROVAL, APPROVED, REJECTED
+    status = Column(String, default='PENDING_APPROVAL')
+    reputation_score = Column(Float, default=0.0)
 
 class RoomType(Base):
     __tablename__ = "room_types"
@@ -40,6 +43,7 @@ class Room(Base):
     hotel_id = Column(String, ForeignKey("hotels.id"))
     room_number = Column(String, nullable=False)
     is_maintenance = Column(Boolean, default=False)
+    housekeeping_status = Column(String, default="READY") # READY, DIRTY, IN_PROGRESS
 
 class Booking(Base):
     __tablename__ = "bookings"
@@ -52,7 +56,8 @@ class Booking(Base):
     check_in = Column(Date, nullable=False)
     check_out = Column(Date, nullable=False)
     total_price = Column(Float)
-    status = Column(String, default="CONFIRMED") # CONFIRMED, CHECKED_IN, COMPLETED, CANCELLED
+    status = Column(String, default="CONFIRMED")
+    channel = Column(String, default="DIRECT")
 
 class SeasonalRate(Base):
     __tablename__ = "seasonal_rates"
@@ -69,57 +74,25 @@ class RatePlan(Base):
     name = Column(String)
     discount_pct = Column(Float)
 
-class RoomMaintenance(Base):
-    __tablename__ = "room_maintenance"
-    id = Column(String, primary_key=True)
-    room_id = Column(String, ForeignKey("rooms.id"))
-    start_date = Column(Date, nullable=False)
-    end_date = Column(Date, nullable=False)
-    reason = Column(String)
-
-class ShiftAssignment(Base):
-    __tablename__ = "shift_assignments"
-    id = Column(String, primary_key=True)
-    hotel_id = Column(String, ForeignKey("hotels.id"))
-    user_id = Column(String, ForeignKey("users.id"))
-    start_time = Column(DateTime, nullable=False)
-    end_time = Column(DateTime, nullable=False)
-    handover_notes = Column(String)
-    created_at = Column(DateTime, default=func.now())
-
 class ChannelAllocation(Base):
     __tablename__ = "channel_allocations"
     id = Column(String, primary_key=True)
     room_type_id = Column(String, ForeignKey("room_types.id"))
-    channel = Column(String) # DIRECT, PARTNER, OTA
+    channel = Column(String)
     allocated_quantity = Column(Integer, default=0)
-
-class Review(Base):
-    __tablename__ = "reviews"
-    id = Column(String, primary_key=True)
-    hotel_id = Column(String, ForeignKey("hotels.id"))
-    booking_id = Column(String, ForeignKey("bookings.id"), unique=True)
-    user_id = Column(String)
-    rating = Column(Integer, nullable=False) # 1-5
-    comment = Column(String)
-    is_verified = Column(Boolean, default=False)
-    created_at = Column(DateTime, default=func.now())
-
-class PreArrivalForm(Base):
-    __tablename__ = "pre_arrival_forms"
-    id = Column(String, primary_key=True)
-    booking_id = Column(String, ForeignKey("bookings.id"), unique=True)
-    arrival_time = Column(DateTime)
-    identity_docs = Column(JSON) # List of image URLs
-    special_requests = Column(String)
-    is_completed = Column(Boolean, default=False)
-    completed_at = Column(DateTime)
 
 class ShiftTemplate(Base):
     __tablename__ = "shift_templates"
     id = Column(String, primary_key=True)
     hotel_id = Column(String, ForeignKey("hotels.id"))
-    name = Column(String) # Morning, Evening, Night
-    start_time_base = Column(String) # HH:MM
-    end_time_base = Column(String) # HH:MM
-    required_staff_count = Column(Integer, default=1)
+    name = Column(String)
+    start_time_base = Column(String)
+    end_time_base = Column(String)
+
+class ShiftAssignment(Base):
+    __tablename__ = "shift_assignments"
+    id = Column(String, primary_key=True)
+    hotel_id = Column(String, ForeignKey("hotels.id"))
+    user_id = Column(String)
+    start_time = Column(DateTime)
+    end_time = Column(DateTime)

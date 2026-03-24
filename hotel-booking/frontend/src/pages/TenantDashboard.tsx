@@ -49,6 +49,9 @@ export const TenantDashboard: React.FC = () => {
             <div className="bg-white p-12 shadow-sm border border-stone-100">
                <h3 className="text-2xl font-serif mb-12 border-b border-stone-50 pb-6">Yield & Analytics</h3>
                <PricingInsights />
+               <div className="pt-12 border-t border-stone-50">
+                  <SeasonalRateForm />
+               </div>
             </div>
           </div>
 

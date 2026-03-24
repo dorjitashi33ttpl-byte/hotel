@@ -2,89 +2,54 @@ import React, { useState } from 'react';
 import { View, Text, StyleSheet, ScrollView, TouchableOpacity, Alert, ActivityIndicator, Platform } from 'react-native';
 import { Colors } from '../theme/colors';
 
-export const BookingDetailScreen = ({ navigation }: any) => {
+export const BookingDetailScreen = ({ route, navigation }: any) => {
+  const { id } = route.params || { id: '1' };
   const [loading, setLoading] = useState(false);
-  const [checkedOut, setCheckedOut] = useState(false);
 
-  const handleSelfCheckout = () => {
-    Alert.alert(
-      "Self Checkout",
-      "Are you ready to finalize your stay at Amankora Paro?",
-      [
-        { text: "Not yet", style: "cancel" },
-        {
-          text: "Confirm Checkout",
-          onPress: async () => {
-             setLoading(true);
-             await new Promise(r => setTimeout(r, 2000));
-             setLoading(false);
-             setCheckedOut(true);
-             Alert.alert("Checkout Complete", "Thank you for your stay. Safe travels!");
-          }
-        }
-      ]
-    );
+  const handleAction = (name: string, route: string) => {
+     navigation.navigate(route, { bookingId: id });
   };
-
-  if (checkedOut) {
-    return (
-      <View style={styles.doneContainer}>
-         <Text style={styles.doneTitle}>Farewell</Text>
-         <Text style={styles.doneText}>Your room status has been updated. We hope to see you again soon.</Text>
-         <TouchableOpacity style={styles.backBtn} onPress={() => navigation.goBack()}>
-            <Text style={styles.backBtnText}>Back to Trips</Text>
-         </TouchableOpacity>
-      </View>
-    );
-  }
 
   return (
     <ScrollView style={styles.container} contentContainerStyle={styles.content}>
       <View style={styles.header}>
-         <Text style={styles.kicker}>Active Stay</Text>
+         <Text style={styles.kicker}>Current Sanctuary</Text>
          <Text style={styles.title}>Amankora Paro</Text>
          <Text style={styles.dates}>01 June - 05 June, 2026</Text>
       </View>
 
-      <View style={styles.infoBox}>
-         <Text style={styles.infoLabel}>Room</Text>
-         <Text style={styles.infoValue}>Valley View Suite - Room 104</Text>
+      <View style={styles.statusSection}>
+         <View style={styles.statusCard}>
+            <Text style={styles.statusLabel}>Room Status</Text>
+            <Text style={styles.statusValue}>Ready for Arrival</Text>
+         </View>
       </View>
 
       <View style={styles.actions}>
-         <Text style={styles.actionTitle}>Guest Services</Text>
+         <Text style={styles.actionTitle}>Guest Experience</Text>
+
+         {[
+           { name: 'Pre-Arrival Form', route: 'PreArrival', desc: 'Required for digital check-in' },
+           { name: 'Digital Room Key', route: 'DigitalKey', desc: 'Secure contactless access' },
+           { name: 'Late Arrival Update', route: 'LateArrival', desc: 'Notify concierge of delays' },
+           { name: 'Service Requests', route: 'ServiceRequest', desc: 'Amenities & housekeeping' },
+           { name: 'Concierge Chat', route: 'Chat', desc: 'Direct secure messaging' }
+         ].map(item => (
+           <TouchableOpacity key={item.name} style={styles.actionBtn} onPress={() => handleAction(item.name, item.route)}>
+              <View>
+                 <Text style={styles.actionName}>{item.name}</Text>
+                 <Text style={styles.actionDesc}>{item.desc}</Text>
+              </View>
+              <Text style={styles.arrow}>→</Text>
+           </TouchableOpacity>
+         ))}
 
          <TouchableOpacity
-           style={styles.actionBtn}
-           onPress={() => navigation.navigate('Directions', {
-             hotelName: 'Amankora Paro',
-             distance: '12.5 km',
-             duration: '25 mins',
-             polyline: 'stub_polyline'
-           })}
+           style={styles.checkoutBtn}
+           onPress={() => Alert.alert("Self-Checkout", "Initiate your departure process?", [{text: "Cancel"}, {text: "Confirm"}])}
          >
-            <Text style={styles.actionText}>Get Directions</Text>
+            <Text style={styles.checkoutText}>Self Checkout</Text>
          </TouchableOpacity>
-
-         <TouchableOpacity style={styles.actionBtn} activeOpacity={0.6}>
-            <Text style={styles.actionText} onPress={() => navigation.navigate('ServiceRequest')}>Request Housekeeping</Text>
-         </TouchableOpacity>
-         <TouchableOpacity style={styles.actionBtn} activeOpacity={0.6}>
-            <Text style={styles.actionText} onPress={() => navigation.navigate('PreArrival')}>Pre-Arrival Form</Text>
-         </TouchableOpacity>
-
-         <View style={styles.checkoutBox}>
-            <Text style={styles.checkoutTitle}>Departure</Text>
-            <Text style={styles.checkoutDesc}>Skip the front desk. Use self-checkout to finalize your bill and notify staff.</Text>
-            <TouchableOpacity
-              style={styles.checkoutBtn}
-              onPress={handleSelfCheckout}
-              disabled={loading}
-              activeOpacity={0.8}
-            >
-               {loading ? <ActivityIndicator color={Colors.stone900} /> : <Text style={styles.checkoutBtnText}>Self Checkout</Text>}
-            </TouchableOpacity>
-         </View>
       </View>
     </ScrollView>
   );
@@ -92,26 +57,21 @@ export const BookingDetailScreen = ({ navigation }: any) => {
 
 const styles = StyleSheet.create({
   container: { flex: 1, backgroundColor: Colors.stone50 },
-  content: { paddingBottom: 40 },
+  content: { paddingBottom: 60 },
   header: { padding: 32, paddingTop: 40, backgroundColor: Colors.white },
   kicker: { fontSize: 10, fontWeight: 'bold', color: Colors.gold, letterSpacing: 4, textTransform: 'uppercase', marginBottom: 8 },
   title: { fontSize: 32, fontFamily: Platform.OS === 'ios' ? 'Optima' : 'serif', color: Colors.stone900 },
   dates: { fontSize: 14, color: Colors.stone400, marginTop: 8 },
-  infoBox: { margin: 32, padding: 24, backgroundColor: Colors.white, borderLeftWidth: 4, borderLeftColor: Colors.gold },
-  infoLabel: { fontSize: 10, fontWeight: 'bold', color: Colors.stone400, textTransform: 'uppercase', marginBottom: 4 },
-  infoValue: { fontSize: 16, fontFamily: Platform.OS === 'ios' ? 'Optima' : 'serif', color: Colors.stone900 },
+  statusSection: { padding: 32 },
+  statusCard: { backgroundColor: Colors.stone900, padding: 24, borderRadius: 2 },
+  statusLabel: { fontSize: 9, fontWeight: 'bold', color: Colors.gold, textTransform: 'uppercase', letterSpacing: 1, marginBottom: 4 },
+  statusValue: { fontSize: 18, color: Colors.white, fontFamily: Platform.OS === 'ios' ? 'Optima' : 'serif' },
   actions: { paddingHorizontal: 32 },
-  actionTitle: { fontSize: 10, fontWeight: 'bold', color: Colors.stone300, letterSpacing: 2, textTransform: 'uppercase', marginBottom: 20 },
-  actionBtn: { paddingVertical: 20, borderBottomWidth: 1, borderBottomColor: Colors.stone100 },
-  actionText: { fontSize: 16, color: Colors.stone900, fontFamily: Platform.OS === 'ios' ? 'Optima' : 'serif' },
-  checkoutBox: { marginTop: 40, padding: 32, backgroundColor: Colors.stone900 },
-  checkoutTitle: { fontSize: 18, fontFamily: Platform.OS === 'ios' ? 'Optima' : 'serif', color: Colors.white, marginBottom: 8 },
-  checkoutDesc: { fontSize: 13, color: Colors.stone400, lineHeight: 20, marginBottom: 24 },
-  checkoutBtn: { backgroundColor: Colors.white, paddingVertical: 16, alignItems: 'center' },
-  checkoutBtnText: { fontSize: 11, fontWeight: 'bold', color: Colors.stone900, textTransform: 'uppercase', letterSpacing: 2 },
-  doneContainer: { flex: 1, alignItems: 'center', justifyContent: 'center', padding: 40, backgroundColor: Colors.white },
-  doneTitle: { fontSize: 48, fontFamily: Platform.OS === 'ios' ? 'Optima' : 'serif', color: Colors.stone900, marginBottom: 20 },
-  doneText: { fontSize: 16, color: Colors.stone500, textAlign: 'center', lineHeight: 24, marginBottom: 40 },
-  backBtn: { borderBottomWidth: 1, borderBottomColor: Colors.stone900 },
-  backBtnText: { fontSize: 10, fontWeight: 'bold', textTransform: 'uppercase', letterSpacing: 2, paddingBottom: 4 },
+  actionTitle: { fontSize: 10, fontWeight: 'black', color: Colors.stone300, letterSpacing: 2, textTransform: 'uppercase', marginBottom: 20 },
+  actionBtn: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', paddingVertical: 24, borderBottomWidth: 1, borderBottomColor: Colors.stone100 },
+  actionName: { fontSize: 16, color: Colors.stone900, fontFamily: Platform.OS === 'ios' ? 'Optima' : 'serif', marginBottom: 4 },
+  actionDesc: { fontSize: 11, color: Colors.stone400 },
+  arrow: { fontSize: 18, color: Colors.stone200 },
+  checkoutBtn: { marginTop: 60, backgroundColor: 'white', borderWidth: 1, borderColor: Colors.stone200, paddingVertical: 20, alignItems: 'center' },
+  checkoutText: { fontSize: 11, fontWeight: 'bold', color: '#ef4444', textTransform: 'uppercase', letterSpacing: 2 },
 });

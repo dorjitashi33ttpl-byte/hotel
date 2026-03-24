@@ -2,10 +2,15 @@ import React from 'react';
 import { BrowserRouter, Routes, Route } from 'react-router-dom';
 import { QueryClient, QueryClientProvider } from 'react-query';
 import { Hero } from './components/landing/Hero';
+import { GlobalSearch } from './components/common/GlobalSearch';
 import { Navbar } from './components/common/Navbar';
+import { ChatWidget } from './components/common/ChatWidget';
 import { FadeIn } from './components/common/FadeIn';
 import { TenantDashboard } from './pages/TenantDashboard';
 import { BookingFlow } from './pages/BookingFlow';
+import { DiningPage } from './pages/DiningPage';
+import { WellnessPage } from './pages/WellnessPage';
+import { HeritagePage } from './pages/HeritagePage';
 import { AdminDashboard } from './pages/admin/AdminDashboard';
 
 const queryClient = new QueryClient();
@@ -14,6 +19,7 @@ function Landing() {
   return (
     <div className="bg-[var(--luxury-stone)] min-h-screen">
       <Hero />
+<GlobalSearch />
       <section className="py-48 px-12 max-w-7xl mx-auto grid grid-cols-1 lg:grid-cols-2 gap-32 items-center">
         <FadeIn>
            <span className="text-[10px] font-bold uppercase tracking-[0.5em] text-[var(--luxury-gold)] block mb-10">Our Story</span>
@@ -38,10 +44,14 @@ function App() {
       <BrowserRouter>
         <Navbar />
         <main className="flex-1">
+<ChatWidget />
           <Routes>
             <Route path="/" element={<Landing />} />
             <Route path="/tenant/*" element={<TenantDashboard />} />
             <Route path="/hotel/:id/book" element={<BookingFlow hotelId={1} roomTypeId={1} />} />
+            <Route path="/dining" element={<DiningPage />} />
+            <Route path="/wellness" element={<WellnessPage />} />
+            <Route path="/heritage" element={<HeritagePage />} />
 <Route path="/admin/*" element={<AdminDashboard />} />
           </Routes>
         </main>

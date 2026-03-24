@@ -34,6 +34,7 @@ export const AdminDashboard = () => {
         <Route path="/" element={<DashboardOverview />} />
         <Route path="/payments" element={<PaymentRegistry />} />
         <Route path="/approvals" element={<HotelApprovals />} />
+        <Route path="/fraud" element={<FraudRadar />} />
         <Route path="/countries" element={<CountrySettings />} />
         <Route path="/audit" element={<AuditLogManagement />} />
         <Route path="/webhook-logs" element={<WebhookLogViewer />} />

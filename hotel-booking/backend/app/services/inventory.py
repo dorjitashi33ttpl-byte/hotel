@@ -1,56 +1,119 @@
 from sqlalchemy.orm import Session
-from sqlalchemy import select, and_, func
+from sqlalchemy import select, and_, func, or_
 from app.models.hotel import Room, Booking, RoomType, ChannelAllocation
 from datetime import date, timedelta
 from typing import List, Optional
 
 class InventoryService:
     @staticmethod
-    async def get_available_quantity(db: Session, room_type_id: str, start_date: date, end_date: date, channel: str = "DIRECT") -> int:
+    def get_available_quantity(
+        db: Session,
+        room_type_id: str,
+        start_date: date,
+        end_date: date,
+        channel: str = "DIRECT"
+    ) -> int:
         """
-        Calculates available quantity, respecting channel allocations.
+        Calculates available quantity using pessimistic locking for safe booking.
+        Strictly enforces channel allocations.
         """
-        room_type = await db.get(RoomType, room_type_id)
-        if not room_type: return 0
+        # 1. Lock the room type row for update to serialize availability checks
+        room_type = db.query(RoomType).filter(RoomType.id == room_type_id).with_for_update().first()
+        if not room_type:
+            return 0
 
-        # 1. Check channel-specific limit
+        # 2. Check channel-specific limit if exists
         alloc = db.query(ChannelAllocation).filter(
             ChannelAllocation.room_type_id == room_type_id,
             ChannelAllocation.channel == channel
         ).first()
 
-        limit = alloc.allocated_quantity if alloc else room_type.total_quantity
+        channel_limit = alloc.allocated_quantity if (alloc and alloc.allocated_quantity > 0) else room_type.total_quantity
 
-        # 2. Count existing bookings for this channel
-        # (In a real system, we'd check availability across all channels to prevent overbooking total capacity)
-        stmt = select(func.count(Booking.id)).where(
+        # 3. Count total booked across ALL channels to ensure physical capacity
+        total_booked_count = db.query(func.count(Booking.id)).filter(
             Booking.room_type_id == room_type_id,
-            Booking.status != "CANCELLED",
-            and_(
-                Booking.check_in < end_date,
-                Booking.check_out > start_date
-            )
-        )
-        booked_count = await db.scalar(stmt)
+            Booking.status.in_(["CONFIRMED", "CHECKED_IN", "HOLD"]),
+            Booking.check_in < end_date,
+            Booking.check_out > start_date
+        ).scalar() or 0
 
-        return max(0, min(limit, room_type.total_quantity) - booked_count)
+        # 4. Count booked for THIS SPECIFIC channel (to enforce allocation limit)
+        channel_booked_count = db.query(func.count(Booking.id)).filter(
+            Booking.room_type_id == room_type_id,
+            Booking.channel == channel,
+            Booking.status.in_(["CONFIRMED", "CHECKED_IN", "HOLD"]),
+            Booking.check_in < end_date,
+            Booking.check_out > start_date
+        ).scalar() or 0
+
+        physical_avail = room_type.total_quantity - total_booked_count
+        channel_avail = channel_limit - channel_booked_count
+
+        return max(0, min(physical_avail, channel_avail))
 
     @staticmethod
-    async def get_available_room_numbers(db: Session, room_type_id: str, start_date: date, end_date: date) -> List[Room]:
-        all_rooms_stmt = select(Room).where(Room.room_type_id == room_type_id, Room.is_maintenance == False)
-        all_rooms = (await db.execute(all_rooms_stmt)).scalars().all()
+    def get_available_rooms(
+        db: Session,
+        room_type_id: str,
+        start_date: date,
+        end_date: date,
+        channel: str = "DIRECT"
+    ) -> List[Room]:
+        """
+        Returns specific available rooms (Mode B).
+        """
+        qty = InventoryService.get_available_quantity(db, room_type_id, start_date, end_date, channel)
+        if qty <= 0:
+            return []
 
-        booked_room_ids_stmt = select(Booking.room_id).where(
+        # Get all rooms for this type that are NOT undergoing maintenance
+        all_rooms = db.query(Room).filter(
+            Room.room_type_id == room_type_id,
+            Room.is_maintenance == False
+        ).all()
+
+        # Get rooms already assigned to overlapping confirmed/hold bookings
+        booked_room_ids = db.query(Booking.room_id).filter(
             Booking.room_type_id == room_type_id,
             Booking.room_id != None,
-            Booking.status != "CANCELLED",
-            and_(
-                Booking.check_in < end_date,
-                Booking.check_out > start_date
-            )
-        )
-        booked_room_ids = (await db.execute(booked_room_ids_stmt)).scalars().all()
+            Booking.status.in_(["CONFIRMED", "CHECKED_IN", "HOLD"]),
+            Booking.check_in < end_date,
+            Booking.check_out > start_date
+        ).all()
+        booked_room_ids = [r[0] for r in booked_room_ids]
 
         return [r for r in all_rooms if r.id not in booked_room_ids]
+
+    @staticmethod
+    def validate_and_allocate(
+        db: Session,
+        room_type_id: str,
+        start_date: date,
+        end_date: date,
+        preferred_room_id: Optional[str] = None,
+        channel: str = "DIRECT"
+    ) -> Optional[str]:
+        """
+        Transaction-safe allocation logic.
+        """
+        qty = InventoryService.get_available_quantity(db, room_type_id, start_date, end_date, channel)
+        if qty <= 0:
+            return None
+
+        room_type = db.query(RoomType).filter(RoomType.id == room_type_id).first()
+
+        if room_type.inventory_mode == "MODE_B":
+            available_rooms = InventoryService.get_available_rooms(db, room_type_id, start_date, end_date, channel)
+            if not available_rooms:
+                return None
+
+            if preferred_room_id:
+                target = next((r for r in available_rooms if r.id == preferred_room_id), None)
+                if target: return target.id
+
+            return available_rooms[0].id
+
+        return "QUANTITY_RESERVED"
 
 inventory_service = InventoryService()

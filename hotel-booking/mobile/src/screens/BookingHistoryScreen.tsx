@@ -1,94 +1,66 @@
-import React, { useState } from 'react';
-import { View, Text, StyleSheet, ScrollView, Image, TouchableOpacity, RefreshControl, Platform } from 'react-native';
+import React, { useEffect, useState } from 'react';
+import { View, Text, StyleSheet, FlatList, TouchableOpacity, Platform } from 'react-native';
 import { Colors } from '../theme/colors';
-import { useHaptics } from '../hooks/useHaptics';
+import { api } from '../services/api';
 
-export const BookingHistoryScreen = () => {
-  const [loading, setLoading] = useState(false);
-  const { trigger } = useHaptics();
+export const BookingHistoryScreen = ({ navigation }: any) => {
+  const [bookings, setBookings] = useState([]);
+  const [loading, setLoading] = useState(true);
 
-  const onRefresh = () => {
-    trigger('light');
-    setLoading(true);
-    setTimeout(() => {
+  useEffect(() => {
+    api.get('/bookings/my').then(resp => {
+      setBookings(resp.data);
       setLoading(false);
-    }, 1500);
-  };
+    });
+  }, []);
+
+  const renderItem = ({ item }: any) => (
+    <TouchableOpacity
+      style={styles.card}
+      onPress={() => navigation.navigate('BookingDetail', { bookingId: item.id })}
+    >
+       <View style={styles.cardHeader}>
+          <Text style={styles.hotelName}>{item.hotel_name || 'Amankora Thimphu'}</Text>
+          <Text style={[styles.status, { color: item.status === 'CONFIRMED' ? '#10b981' : Colors.stone400 }]}>
+            {item.status}
+          </Text>
+       </View>
+       <View style={styles.details}>
+          <Text style={styles.date}>{item.check_in} — {item.check_out}</Text>
+          <Text style={styles.price}>Nu. {item.total_price.toLocaleString()}</Text>
+       </View>
+    </TouchableOpacity>
+  );
 
   return (
-    <ScrollView
-      style={styles.container}
-      contentContainerStyle={styles.content}
-      refreshControl={<RefreshControl refreshing={loading} onRefresh={onRefresh} tintColor={Colors.gold} />}
-    >
-      <View style={styles.header}>
-         <Text style={styles.kicker}>Your Journeys</Text>
-         <Text style={styles.title}>Trip History</Text>
-      </View>
-
-      <View style={styles.section}>
-         <Text style={styles.sectionTitle}>Active & Upcoming</Text>
-         <TouchableOpacity style={styles.card} activeOpacity={0.9}>
-            <View style={styles.cardHeader}>
-               <View>
-                  <Text style={styles.hotelName}>Amankora Paro</Text>
-                  <Text style={styles.dates}>01 June - 05 June, 2026</Text>
-               </View>
-               <View style={styles.statusBadge}>
-                  <Text style={styles.statusText}>CONFIRMED</Text>
-               </View>
-            </View>
-            <Image
-               source={{ uri: 'https://images.unsplash.com/photo-1549294413-26f195200c16?w=800' }}
-               style={styles.cardImage}
-            />
-            <View style={styles.cardFooter}>
-               <Text style={styles.roomType}>Valley View Suite</Text>
-               <TouchableOpacity style={styles.detailButton}>
-                  <Text style={styles.detailButtonText}>Manage Stay</Text>
-               </TouchableOpacity>
-            </View>
-         </TouchableOpacity>
-      </View>
-
-      <View style={styles.pastSection}>
-         <Text style={styles.sectionTitle}>Past Sanctuaries</Text>
-         {[1].map(i => (
-           <View key={i} style={styles.pastItem}>
-              <View style={styles.pastInfo}>
-                 <Text style={styles.pastHotel}>Zhiwa Ling Heritage</Text>
-                 <Text style={styles.pastDate}>October 2025</Text>
-              </View>
-              <Text style={styles.pastPrice}>$3,200</Text>
+    <View style={styles.container}>
+       <Text style={styles.title}>Your Sanctuary Journey</Text>
+       <FlatList
+         data={bookings}
+         renderItem={renderItem}
+         keyExtractor={(item: any) => item.id}
+         contentContainerStyle={styles.list}
+         ListEmptyComponent={
+           <View style={styles.empty}>
+              <Text style={styles.emptyText}>No past stays found.</Text>
            </View>
-         ))}
-      </View>
-    </ScrollView>
+         }
+       />
+    </View>
   );
 };
 
 const styles = StyleSheet.create({
-  container: { flex: 1, backgroundColor: Colors.stone50 },
-  content: { paddingBottom: 40 },
-  header: { padding: 32, paddingTop: 60 },
-  kicker: { fontSize: 10, fontWeight: 'bold', color: Colors.gold, letterSpacing: 4, textTransform: 'uppercase', marginBottom: 8 },
-  title: { fontSize: 36, fontFamily: Platform.OS === 'ios' ? 'Optima' : 'serif', color: Colors.stone900 },
-  section: { padding: 32 },
-  sectionTitle: { fontSize: 10, fontWeight: 'bold', color: Colors.stone400, letterSpacing: 2, textTransform: 'uppercase', marginBottom: 24 },
-  card: { backgroundColor: Colors.white, shadowColor: '#000', shadowOffset: { width: 0, height: 10 }, shadowOpacity: 0.05, shadowRadius: 20, elevation: 5 },
-  cardHeader: { padding: 24, flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center' },
-  hotelName: { fontSize: 20, fontFamily: Platform.OS === 'ios' ? 'Optima' : 'serif', color: Colors.stone900 },
-  dates: { fontSize: 12, color: Colors.stone400, marginTop: 4 },
-  statusBadge: { backgroundColor: Colors.stone900, paddingHorizontal: 12, paddingVertical: 6 },
-  statusText: { color: Colors.white, fontSize: 8, fontWeight: 'bold', letterSpacing: 1 },
-  cardImage: { width: '100%', height: 200 },
-  cardFooter: { padding: 24, flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center' },
-  roomType: { fontSize: 14, fontFamily: Platform.OS === 'ios' ? 'Optima' : 'serif', color: Colors.stone500 },
-  detailButton: { borderBottomWidth: 1, borderBottomColor: Colors.stone900 },
-  detailButtonText: { fontSize: 10, fontWeight: 'bold', textTransform: 'uppercase', letterSpacing: 1, paddingBottom: 2 },
-  pastSection: { paddingHorizontal: 32 },
-  pastItem: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', paddingVertical: 24, borderBottomWidth: 1, borderBottomColor: Colors.stone100 },
-  pastHotel: { fontSize: 16, fontFamily: Platform.OS === 'ios' ? 'Optima' : 'serif', color: Colors.stone900 },
-  pastDate: { fontSize: 11, color: Colors.stone400, marginTop: 2 },
-  pastPrice: { fontSize: 14, fontStyle: 'italic', color: Colors.stone500 },
+  container: { flex: 1, backgroundColor: Colors.stone50, paddingTop: 60 },
+  title: { fontSize: 24, fontFamily: Platform.OS === 'ios' ? 'Playfair Display' : 'serif', color: Colors.stone900, marginHorizontal: 24, marginBottom: 32 },
+  list: { paddingHorizontal: 24 },
+  card: { backgroundColor: 'white', padding: 24, borderBottomWidth: 1, borderBottomColor: Colors.stone100, marginBottom: 12 },
+  cardHeader: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', marginBottom: 8 },
+  hotelName: { fontSize: 16, fontWeight: 'bold', color: Colors.stone900 },
+  status: { fontSize: 10, fontWeight: '900', textTransform: 'uppercase', letterSpacing: 1 },
+  details: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center' },
+  date: { fontSize: 12, color: Colors.stone400 },
+  price: { fontSize: 13, color: Colors.stone900, fontWeight: '600' },
+  empty: { marginTop: 100, alignItems: 'center' },
+  emptyText: { color: Colors.stone300, fontSize: 14 }
 });

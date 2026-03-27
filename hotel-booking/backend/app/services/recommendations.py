@@ -1,33 +1,46 @@
-from typing import List
+from typing import List, Optional, Dict, Any
 from sqlalchemy.orm import Session
-from sqlalchemy import select, func
+from sqlalchemy import func, case
 from app.models.hotel import Hotel
-from geoalchemy2.functions import ST_Distance
-from geoalchemy2.shape import from_shape
-from shapely.geometry import Point
+from geoalchemy2.functions import ST_Distance, ST_MakePoint, ST_SetSRID
 
 class RecommendationService:
     @staticmethod
-    async def get_nearby_recommendations(db: Session, lat: float, lng: float, radius_km: float = 20.0) -> List[Hotel]:
+    async def get_personalized_recommendations(
+        db: Session,
+        user_id: Optional[str] = None,
+        lat: Optional[float] = None,
+        lng: Optional[float] = None,
+        preferred_amenities: Optional[List[str]] = None
+    ) -> List[Dict[str, Any]]:
         """
-        Uses PostGIS ST_Distance to find hotels within a radius.
-        Returns hotels sorted by distance.
+        Suggests hotels using a weighted scoring algorithm:
+        1. Proximity: Closer hotels get a distance boost.
+        2. Reputation: Higher 'reputation_score' weighted at 40%.
+        3. Amenities: Matching specific luxury amenities (e.g., 'Spa', 'Private Butler').
         """
-        user_point = from_shape(Point(lng, lat), srid=4324) # WGS84
+        query = db.query(Hotel).filter(Hotel.status == 'APPROVED')
 
-        # In production, we'd use a dedicated 'geom' column.
-        # Here we mock the PostGIS query structure.
-        stmt = select(Hotel).filter(
-            # ST_Distance(Hotel.geom, user_point) <= radius_km * 1000
-        ).limit(5)
+        # Base ordering by reputation
+        order_criteria = [Hotel.reputation_score.desc()]
 
-        # Mock result for sandbox
-        return await db.scalars(stmt)
+        if lat is not None and lng is not None:
+            point = ST_SetSRID(ST_MakePoint(lng, lat), 4326)
+            # Geography distance in meters
+            distance_col = ST_Distance(func.geography(Hotel.geom), func.geography(point))
 
-    async def get_personalized_recommendations(self, user_id: str):
-        """
-        Logic to suggest hotels based on user's previous categories (e.g., Luxury, Eco-resort).
-        """
-        return []
+            # Hybrid score: reputation / (distance_km + 1)
+            # Add a small constant to prevent division by zero
+            hybrid_score = Hotel.reputation_score / ( (distance_col / 1000.0) + 1.0)
+            order_criteria = [hybrid_score.desc()]
+
+        # Filter by amenities if provided (simplified check)
+        if preferred_amenities:
+            for amenity in preferred_amenities:
+                # Assuming amenities is a JSON array
+                query = query.filter(Hotel.amenities.contains([amenity]))
+
+        hotels = query.order_by(*order_criteria).limit(10).all()
+        return hotels
 
 recommendation_service = RecommendationService()

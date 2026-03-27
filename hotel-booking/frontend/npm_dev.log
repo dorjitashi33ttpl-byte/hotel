@@ -5,4 +5,4 @@ npm error errno -2
 npm error enoent Could not read package.json: Error: ENOENT: no such file or directory, open '/app/hotel-booking/frontend/package.json'
 npm error enoent This is related to npm not being able to find a file.
 npm error enoent
-npm error A complete log of this run can be found in: /home/jules/.npm/_logs/2026-03-25T11_25_36_915Z-debug-0.log
+npm error A complete log of this run can be found in: /home/jules/.npm/_logs/2026-03-27T02_20_49_833Z-debug-0.log

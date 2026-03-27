@@ -64,3 +64,17 @@ async def import_master_data(
     # Resource mapping logic
     # count = await master_importer.import_from_csv(db, model, content, mapping)
     return {"status": "success", "imported": 0}
+
+@router.get("/reports/revenue-by-region")
+async def get_revenue_by_region(db: Session = Depends(get_db)):
+    """
+    Aggregates gross revenue and platform commission by Dzongkhag.
+    """
+    # Join CommissionLedger with Hotel/Region
+    results = db.query(
+        Region.name,
+        func.sum(CommissionLedger.gross_amount).label("revenue"),
+        func.count(CommissionLedger.id).label("bookings")
+    ).join(Hotel, Hotel.id == CommissionLedger.hotel_id)     .join(Region, Region.name == Hotel.city)     .group_by(Region.name).all()
+
+    return [{"region": r[0], "revenue": r[1], "bookings": r[2]} for r in results]

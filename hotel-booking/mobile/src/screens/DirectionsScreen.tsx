@@ -1,41 +1,50 @@
-import React from 'react';
-import { View, Text, StyleSheet, TouchableOpacity, Platform } from 'react-native';
+import React, { useEffect, useState } from 'react';
+import { View, Text, StyleSheet, Platform, TouchableOpacity, Linking } from 'react-native';
 import { Colors } from '../theme/colors';
+import { api } from '../services/api';
 
-export const DirectionsScreen = ({ route, navigation }: any) => {
-  const { hotelName, distance, duration, polyline } = route.params || {
-    hotelName: 'Amankora Paro',
-    distance: '12.5 km',
-    duration: '25 mins',
-    polyline: '...'
+export const DirectionsScreen = ({ route }: any) => {
+  const { hotelId, hotelName } = route.params || { hotelId: 'H1', hotelName: 'Thimphu Heritage' };
+  const [routeInfo, setRouteInfo] = useState<any>(null);
+
+  useEffect(() => {
+    // Fetch route from user's current location (mocked lat/lng)
+    api.get(`/hotels/${hotelId}/route`, { params: { from_lat: 27.48, from_lng: 89.64 } }).then(resp => {
+      setRouteInfo(resp.data);
+    });
+  }, [hotelId]);
+
+  const openExternalMaps = () => {
+    const url = Platform.select({
+      ios: `maps:0,0?q=${hotelName}`,
+      android: `geo:0,0?q=${hotelName}`
+    });
+    if (url) Linking.openURL(url);
   };
 
   return (
     <View style={styles.container}>
       <View style={styles.mapStub}>
-         <Text style={styles.mapText}>Mapbox Route Preview</Text>
-         <Text style={styles.polylineStub}>Polyline: {polyline.substring(0, 20)}...</Text>
+         <Text style={styles.mapText}>[ Mapbox Polyline Preview ]</Text>
       </View>
 
-      <View style={styles.card}>
+      <View style={styles.content}>
+         <Text style={styles.kicker}>Arriving at Your Sanctuary</Text>
          <Text style={styles.title}>{hotelName}</Text>
+
          <View style={styles.stats}>
-            <View>
-               <Text style={styles.label}>Distance</Text>
-               <Text style={styles.value}>{distance}</Text>
+            <View style={styles.stat}>
+               <Text style={styles.statVal}>{routeInfo?.duration_mins || '--'} min</Text>
+               <Text style={styles.statLabel}>Travel Time</Text>
             </View>
-            <View>
-               <Text style={styles.label}>Duration</Text>
-               <Text style={styles.value}>{duration}</Text>
+            <View style={[styles.stat, styles.border]}>
+               <Text style={styles.statVal}>{routeInfo?.distance_km || '--'} km</Text>
+               <Text style={styles.statLabel}>Distance</Text>
             </View>
          </View>
 
-         <TouchableOpacity style={styles.externalBtn}>
-            <Text style={styles.externalBtnText}>Open in Google Maps</Text>
-         </TouchableOpacity>
-
-         <TouchableOpacity style={styles.closeBtn} onPress={() => navigation.goBack()}>
-            <Text style={styles.closeBtnText}>Close</Text>
+         <TouchableOpacity style={styles.mainBtn} onPress={openExternalMaps}>
+            <Text style={styles.btnText}>Open in Google Maps</Text>
          </TouchableOpacity>
       </View>
     </View>
@@ -43,17 +52,17 @@ export const DirectionsScreen = ({ route, navigation }: any) => {
 };
 
 const styles = StyleSheet.create({
-  container: { flex: 1, backgroundColor: Colors.stone900 },
-  mapStub: { flex: 1, alignItems: 'center', justifyContent: 'center', backgroundColor: Colors.stone100 },
-  mapText: { fontSize: 12, fontWeight: 'bold', color: Colors.stone400, textTransform: 'uppercase', letterSpacing: 2 },
-  polylineStub: { fontSize: 8, color: Colors.stone300, marginTop: 10 },
-  card: { backgroundColor: Colors.white, padding: 32, borderTopLeftRadius: 32, borderTopRightRadius: 32 },
-  title: { fontSize: 24, fontFamily: Platform.OS === 'ios' ? 'Optima' : 'serif', color: Colors.stone900, marginBottom: 24 },
-  stats: { flexDirection: 'row', gap: 40, marginBottom: 40 },
-  label: { fontSize: 10, fontWeight: 'bold', color: Colors.stone400, textTransform: 'uppercase', letterSpacing: 1, marginBottom: 4 },
-  value: { fontSize: 18, color: Colors.stone900 },
-  externalBtn: { backgroundColor: Colors.stone900, paddingVertical: 18, alignItems: 'center', marginBottom: 12 },
-  externalBtnText: { color: Colors.white, fontSize: 11, fontWeight: 'bold', textTransform: 'uppercase', letterSpacing: 2 },
-  closeBtn: { paddingVertical: 12, alignItems: 'center' },
-  closeBtnText: { color: Colors.stone400, fontSize: 10, fontWeight: 'bold', textTransform: 'uppercase', letterSpacing: 1 },
+  container: { flex: 1, backgroundColor: 'white' },
+  mapStub: { flex: 1.2, backgroundColor: Colors.stone100, alignItems: 'center', justifyContent: 'center' },
+  mapText: { color: Colors.stone300, fontSize: 10, fontWeight: 'bold', textTransform: 'uppercase', letterSpacing: 2 },
+  content: { flex: 1, padding: 40, borderTopLeftRadius: 40, borderTopRightRadius: 40, marginTop: -40, backgroundColor: 'white', shadowColor: '#000', shadowOffset: { width: 0, height: -10 }, shadowOpacity: 0.1, shadowRadius: 20, elevation: 10 },
+  kicker: { fontSize: 10, fontWeight: '900', color: Colors.gold, letterSpacing: 2, textTransform: 'uppercase', marginBottom: 12 },
+  title: { fontSize: 28, fontFamily: Platform.OS === 'ios' ? 'Playfair Display' : 'serif', color: Colors.stone900, marginBottom: 40 },
+  stats: { flexDirection: 'row', marginBottom: 60 },
+  stat: { flex: 1 },
+  border: { borderLeftWidth: 1, borderLeftColor: Colors.stone100, paddingLeft: 24 },
+  statVal: { fontSize: 20, fontWeight: 'bold', color: Colors.stone900 },
+  statLabel: { fontSize: 10, color: Colors.stone400, textTransform: 'uppercase', marginTop: 4, letterSpacing: 1 },
+  mainBtn: { backgroundColor: Colors.stone900, paddingVertical: 20, alignItems: 'center', borderRadius: 4 },
+  btnText: { color: Colors.white, fontSize: 11, fontWeight: 'bold', textTransform: 'uppercase', letterSpacing: 2 }
 });

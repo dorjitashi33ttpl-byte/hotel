@@ -1,98 +1,54 @@
-from datetime import date, timedelta
-from typing import List
-from fastapi import APIRouter, Depends, HTTPException
-from sqlalchemy.ext.asyncio import AsyncSession
-from sqlalchemy import select
-from app.core.database import get_db
-from app.models.hotel import Room, Booking, Hotel
+from fastapi import APIRouter, Depends, HTTPException, Body
+from sqlalchemy.orm import Session
+from typing import List, Dict, Any
+from app.api.deps import get_db, get_current_tenant_user
+from app.models.hotel import Hotel, RoomType, ChannelAllocation
+from app.services.financials import financial_service
+from app.services.features import feature_flag_service
 
 router = APIRouter()
 
-@router.get("/{id}/room-rack")
-async def get_room_rack(id: str, start_date: date, db: AsyncSession = Depends(get_db)):
-    """
-    Returns a grid of rooms and their bookings for a 30-day window.
-    Essential for 'Fixed Room Number' (Mode B) inventory management.
-    """
-    end_date = start_date + timedelta(days=30)
-
-    # Fetch rooms
-    stmt_rooms = select(Room).where(Room.hotel_id == id)
-    result_rooms = await db.execute(stmt_rooms)
-    rooms_list = result_rooms.scalars().all()
-
-    # Fetch bookings
-    stmt_bookings = select(Booking).where(
-        Booking.hotel_id == id,
-        Booking.check_in < end_date,
-        Booking.check_out > start_date,
-        Booking.status != "CANCELLED"
-    )
-    result_bookings = await db.execute(stmt_bookings)
-    bookings_list = result_bookings.scalars().all()
-
-    # Map bookings to rooms
-    rack_data = []
-    for room in rooms_list:
-        room_bookings = [
-            {
-                "id": b.id,
-                "check_in": b.check_in,
-                "check_out": b.check_out,
-                "guest_name": b.guest_name if hasattr(b, 'guest_name') else "Guest",
-                "status": b.status
-            }
-            for b in bookings_list if b.room_id == room.id
-        ]
-        rack_data.append({
-            "room_id": room.id,
-            "room_number": room.room_number,
-            "bookings": room_bookings
-        })
-
-    return rack_data
-
-from app.services.analytics import analytics_service
-
-@router.get("/metrics/summary")
-async def get_performance_summary(
+@router.get("/hotels/{hotel_id}/metrics")
+async def get_hotel_metrics(
     hotel_id: str,
-    days: int = 30,
-    db: Session = Depends(get_db)
-):
-    """
-    Returns ADR, RevPAR, and occupancy for the tenant.
-    """
-    return analytics_service.get_hotel_metrics(db, hotel_id, days)
-
-from app.services.storage import storage_service
-from fastapi import UploadFile, File
-
-@router.post("/hotels/{hotel_id}/media/upload")
-async def upload_hotel_media(
-    hotel_id: str,
-    file: UploadFile = File(...),
     db: Session = Depends(get_db),
-    current_user = Depends(get_current_active_user)
+    current_user = Depends(get_current_tenant_user)
 ):
     """
-    Uploads an image for the hotel property.
+    Returns business intelligence metrics for the hotel.
     """
-    content = await file.read()
-    url = await storage_service.upload_file(content, f"hotel_{hotel_id}_{file.filename}")
+    if str(current_user.tenant_id) != hotel_id and current_user.role != "platform_admin":
+        raise HTTPException(status_code=403, detail="Not authorized for this hotel")
 
-    # Update hotel media JSON in DB
-    return {"url": url, "status": "uploaded"}
+    return financial_service.get_tenant_analytics(db, hotel_id)
 
-@router.post("/hotels/{hotel_id}/menu/upload")
-async def upload_property_menu(
+@router.get("/hotels/{hotel_id}/channel-allocation")
+async def get_channel_allocation(
     hotel_id: str,
-    file: UploadFile = File(...),
-    db: Session = Depends(get_db)
+    db: Session = Depends(get_db),
+    current_user = Depends(get_current_tenant_user)
 ):
-    """
-    Uploads the property's menu PDF.
-    """
-    content = await file.read()
-    url = await storage_service.upload_file(content, f"menu_{hotel_id}.pdf")
-    return {"url": url, "status": "menu_uploaded"}
+    return db.query(ChannelAllocation).join(RoomType).filter(RoomType.hotel_id == hotel_id).all()
+
+@router.post("/hotels/{hotel_id}/channel-allocation")
+async def update_channel_allocation(
+    hotel_id: str,
+    data: List[Dict[str, Any]],
+    db: Session = Depends(get_db),
+    current_user = Depends(get_current_tenant_user)
+):
+    # Logic to update or create channel allocations
+    return {"status": "updated"}
+
+@router.patch("/hotels/{hotel_id}/policies")
+async def update_hotel_policies(
+    hotel_id: str,
+    policies: Dict[str, Any] = Body(...),
+    db: Session = Depends(get_db),
+    current_user = Depends(get_current_tenant_user)
+):
+    hotel = db.query(Hotel).filter(Hotel.id == hotel_id).first()
+    if not hotel: raise HTTPException(404)
+    hotel.policies = policies
+    db.commit()
+    return hotel

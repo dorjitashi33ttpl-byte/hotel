@@ -1,38 +1,59 @@
 import React from 'react';
+import { AdminLayout } from '../../components/admin/framework/AdminLayout';
 import { DataTable } from '../../components/admin/framework/DataTable';
-import { ShieldAlert, Eye } from 'lucide-react';
+import { StatusBadge } from '../../components/admin/framework/StatusBadge';
+import { ShieldAlert, Fingerprint, MapPin } from 'lucide-react';
 
 export const FraudRadar = () => {
   const columns = [
-    { header: 'Booking Ref', accessor: 'booking_id' },
-    { header: 'Guest', accessor: 'guest_name' },
     {
-      header: 'Risk Score',
-      accessor: 'risk_score',
-      render: (val: number) => (
-        <div className="flex items-center gap-2">
-           <div className="flex-1 h-1.5 bg-stone-100 rounded-full overflow-hidden w-24">
-              <div className="bg-red-500 h-full" style={{ width: `${val}%` }} />
-           </div>
-           <span className="text-[10px] font-black text-red-600">{val}/100</span>
-        </div>
-      )
+        header: 'Risk Level',
+        accessor: 'risk_level',
+        render: (val: string) => (
+            <span className={`text-[10px] font-black px-3 py-1 rounded-full ${
+                val === 'HIGH' ? 'bg-red-100 text-red-700' : 'bg-amber-100 text-amber-700'
+            }`}>
+                {val}
+            </span>
+        )
     },
-    { header: 'Amount', accessor: 'amount', render: (val: number) => `Nu. ${val.toLocaleString()}` },
+    { header: 'Reasoning', accessor: 'reason' },
+    { header: 'Source IP', accessor: 'ip_address' },
+    { header: 'Detected', accessor: 'timestamp' },
+    {
+        header: 'Intelligence',
+        accessor: 'id',
+        render: () => (
+            <div className="flex gap-4 text-stone-300">
+                <Fingerprint className="w-4 h-4" />
+                <MapPin className="w-4 h-4" />
+            </div>
+        )
+    }
   ];
 
   return (
-    <div className="p-8">
-      <div className="flex items-center gap-4 mb-8">
-         <ShieldAlert className="w-8 h-8 text-red-500" />
-         <h1 className="text-2xl font-serif">Fraud Radar</h1>
-      </div>
+    <AdminLayout>
+      <div className="p-8">
+        <div className="flex items-start gap-6 mb-16">
+           <div className="w-16 h-16 bg-red-50 rounded-full flex items-center justify-center">
+              <ShieldAlert className="text-red-600 w-8 h-8" />
+           </div>
+           <div>
+              <h1 className="text-4xl font-serif text-stone-900">Fraud Radar</h1>
+              <p className="text-stone-500 text-sm mt-2">Automated threat detection and behavioral analysis.</p>
+           </div>
+        </div>
 
-      <DataTable
-        columns={columns}
-        endpoint="/admin/fraud/alerts"
-        onView={(item) => console.log('Viewing alert', item)}
-      />
-    </div>
+        <DataTable
+          columns={columns}
+          endpoint="/admin/fraud/alerts"
+          bulkActions={[
+             { label: 'Blacklist IP', action: (items) => console.log('Blacklisting', items) },
+             { label: 'Dismiss Alert', action: (items) => console.log('Dismissing', items) }
+          ]}
+        />
+      </div>
+    </AdminLayout>
   );
 };

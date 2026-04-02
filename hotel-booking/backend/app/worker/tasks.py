@@ -1,19 +1,25 @@
 from app.worker.celery_app import celery_app
 import httpx
-import hmac
-import hashlib
 import json
 from app.services.notifications import notification_service
 from app.services.websocket import manager
 from app.models.hotel import Booking, Hotel
+from app.utils.hmac_helper import hmac_helper
 from sqlalchemy.orm import Session
 from app.db.session import SessionLocal
 
 @celery_app.task(bind=True, max_retries=5)
 def dispatch_webhook(self, url: str, secret: str, payload: dict):
-    body = json.dumps(payload)
-    signature = hmac.new(secret.encode(), body.encode(), hashlib.sha256).hexdigest()
-    headers = {"Content-Type": "application/json", "X-Hotel-Signature": signature}
+    """
+    Dispatches a signed webhook to a partner endpoint.
+    """
+    body = json.dumps(payload, sort_keys=True)
+    signature = hmac_helper.sign_payload(payload, secret)
+    headers = {
+        "Content-Type": "application/json",
+        "X-Hotel-Signature": signature,
+        "User-Agent": "HotelMasterpiece/1.0"
+    }
     try:
         with httpx.Client() as client:
             response = client.post(url, content=body, headers=headers, timeout=10.0)
@@ -23,34 +29,15 @@ def dispatch_webhook(self, url: str, secret: str, payload: dict):
 
 @celery_app.task
 def notify_affected_bookings_on_shift_change(hotel_id: str, old_shift_id: str, new_shift_id: str):
-    """
-    Identifies bookings that occur during the changed shift and sends updates via Email and WebSocket.
-    """
     db = SessionLocal()
     try:
         hotel = db.query(Hotel).filter(Hotel.id == hotel_id).first()
-        # Find active confirmed bookings for this hotel
-        bookings = db.query(Booking).filter(
-            Booking.hotel_id == hotel_id,
-            Booking.status == "CONFIRMED"
-        ).all()
-
+        bookings = db.query(Booking).filter(Booking.hotel_id == hotel_id, Booking.status == "CONFIRMED").all()
         for booking in bookings:
-            # 1. Email Notification with updated staff info
-            # notification_service.send_booking_confirmation handles on-shift staff lookup
-            # In a real app, we'd use booking.guest_email
-            celery_app.send_task(
-                "app.worker.tasks.send_async_email",
-                args=["guest@example.com", booking.id, hotel_id, True]
-            )
-
-            # 2. Real-time WebSocket Alert for Guests
-            manager.send_json_to_user(
-                {"type": "SHIFT_UPDATE", "hotel": hotel.name, "message": "Your check-in focal person has been updated."},
-                booking.user_id
-            )
-
-        print(f"Notified {len(bookings)} bookings of shift change in {hotel.name}")
+            # Async email
+            celery_app.send_task("app.worker.tasks.send_async_email", args=["guest@example.com", booking.id, hotel_id, True])
+            # WS Alert
+            manager.send_json_to_user({"type": "SHIFT_UPDATE", "hotel": hotel.name}, booking.user_id)
     finally:
         db.close()
 

@@ -8,6 +8,8 @@ import { BookingFlow } from './pages/BookingFlow';
 import { DiningPage } from './pages/DiningPage';
 import { WellnessPage } from './pages/WellnessPage';
 import { HeritagePage } from './pages/HeritagePage';
+import { SuitesPage } from './pages/SuitesPage';
+import { HotelSearch } from './pages/HotelSearch';
 import { AdminDashboard } from './pages/admin/AdminDashboard';
 
 const queryClient = new QueryClient();
@@ -20,8 +22,10 @@ function App() {
         <main className="flex-1">
           <Routes>
             <Route path="/" element={<LandingPage />} />
+            <Route path="/search" element={<HotelSearch />} />
             <Route path="/tenant/*" element={<TenantDashboard />} />
             <Route path="/hotel/:id/book" element={<BookingFlow hotelId="hotel_thimphu_1" roomTypeId="rt_deluxe" />} />
+            <Route path="/suites" element={<SuitesPage />} />
             <Route path="/dining" element={<DiningPage />} />
             <Route path="/wellness" element={<WellnessPage />} />
             <Route path="/heritage" element={<HeritagePage />} />

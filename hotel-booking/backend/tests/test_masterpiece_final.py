@@ -1,17 +1,14 @@
 import pytest
-from app.services.settlements import settlement_service
-from app.services.tracking import tracking_service
-from unittest.mock import MagicMock
+from app.services.ai_concierge import ai_concierge
 
-@pytest.mark.asyncio
-async def test_settlement_payout_logic_stub():
-    db = MagicMock()
-    # Stub test for payout aggregation
-    result = await settlement_service.generate_hotel_payout(db, "hotel-1")
-    assert result is None or hasattr(result, "id")
+def test_ai_concierge_responses():
+    """Verifies the rule-based AI concierge triggers correctly."""
+    assert "12:00 PM" in ai_concierge.get_auto_response("When is checkout?")
+    assert "Lotus Pavilion" in ai_concierge.get_auto_response("What time is breakfast?")
+    assert "password" in ai_concierge.get_auto_response("Is there wifi?")
+    assert ai_concierge.get_auto_response("Random text") is None
 
-def test_webhook_tracking_stub():
-    db = MagicMock()
-    # Stub test for logging webhooks
-    tracking_service.log_webhook_delivery(db, "p-1", "booking.confirmed", {}, 200, "OK", 150)
-    assert db.add.called
+def test_bhutan_phone_formatting():
+    from app.utils.bhutan_helpers import format_bhutan_phone
+    assert format_bhutan_phone("17123456") == "+975-17123456"
+    assert format_bhutan_phone("+97517123456") == "+975-17123456"

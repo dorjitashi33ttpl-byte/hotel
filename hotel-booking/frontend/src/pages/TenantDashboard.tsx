@@ -1,86 +1,79 @@
-import React from 'react';
-import { InventoryConfig } from '../components/tenant/InventoryConfig';
-import { StaffScheduling } from '../components/tenant/StaffScheduling';
-import { PricingInsights } from '../components/tenant/PricingInsights';
-import { AuditLog } from '../components/tenant/AuditLog';
-import { MenuUpload } from '../components/tenant/MenuUpload';
-import { HoldActivityFeed } from '../components/tenant/HoldActivityFeed';
-import { WalkInBookingForm } from '../components/tenant/WalkInBookingForm';
-import { PayoutManagement } from '../components/tenant/PayoutManagement';
-import { AvailabilityCalendar } from '../components/tenant/AvailabilityCalendar';
-import { HousekeepingDashboard } from '../components/tenant/HousekeepingDashboard';
+import React, { useState } from 'react';
 import { RoomRack } from '../components/tenant/RoomRack';
+import { HousekeepingDashboard } from '../components/tenant/HousekeepingDashboard';
+import { PayoutManagement } from '../components/tenant/PayoutManagement';
+import { PricingInsights } from '../components/tenant/PricingInsights';
+import { ChannelAllocationManager } from '../components/tenant/ChannelAllocationManager';
+import { CheckInVerification } from '../components/tenant/CheckInVerification';
+import { QRScannerView } from '../components/tenant/QRScannerView';
+import { StaffScheduling } from '../components/tenant/StaffScheduling';
+import { PartnerAccess } from '../components/tenant/PartnerAccess';
+import MediaManagement from '../components/tenant/MediaManagement';
+import { StaffChatDashboard } from './tenant/StaffChatDashboard';
+import { motion, AnimatePresence } from 'framer-motion';
+import { LayoutGrid, Wind, CreditCard, BarChart3, Globe, ShieldCheck, Scan, MessageSquare, Users, Link as LinkIcon, Image as ImageIcon } from 'lucide-react';
 
-export const TenantDashboard: React.FC = () => {
+export const TenantDashboard = () => {
+  const [activeView, setActiveView] = useState('rooms');
+  const hotelId = 'hotel_thimphu_1';
+
+  const menuItems = [
+    { id: 'rooms', label: 'Room Rack', icon: LayoutGrid },
+    { id: 'arrivals', label: 'Arrivals', icon: ShieldCheck },
+    { id: 'cleaning', label: 'Housekeeping', icon: Wind },
+    { id: 'shifts', label: 'Staffing', icon: Users },
+    { id: 'media', label: 'Media', icon: ImageIcon },
+    { id: 'chat', label: 'Concierge', icon: MessageSquare },
+    { id: 'scanner', label: 'QR Scanner', icon: Scan },
+    { id: 'pricing', label: 'Yields', icon: BarChart3 },
+    { id: 'channels', label: 'Distribution', icon: Globe },
+    { id: 'partner', label: 'Partners', icon: LinkIcon },
+    { id: 'payouts', label: 'Financials', icon: CreditCard },
+  ];
+
   return (
-    <div className="bg-stone-50 min-h-screen p-12">
-      <div className="max-w-[1600px] mx-auto space-y-16">
-        <header className="flex justify-between items-end border-b border-stone-200 pb-12">
-          <div>
-            <span className="text-[10px] font-bold uppercase tracking-[0.5em] text-gold block mb-4">Owner Center</span>
-            <h1 className="text-5xl font-serif tracking-tighter">Amankora Paro</h1>
-            <p className="text-stone-400 mt-4 text-[10px] font-bold uppercase tracking-widest flex items-center gap-4">
-              Platinum Tier • <span className="text-stone-900 border-b border-stone-900 cursor-pointer hover:opacity-50 transition-opacity">Preview Public Sanctuary</span>
-            </p>
+    <div className="flex min-h-screen bg-stone-50">
+       <div className="w-72 bg-white border-r border-stone-100 flex flex-col p-8 sticky top-0 h-screen">
+          <div className="mb-16">
+             <span className="text-[10px] font-black uppercase tracking-[0.4em] text-gold block mb-2">Management Console</span>
+             <h1 className="text-xl font-serif text-stone-900">Bhutan Sanctuary</h1>
           </div>
-          <div className="flex gap-4">
-             <button className="bg-stone-900 text-white px-8 py-4 font-serif text-xs uppercase tracking-widest hover:bg-gold transition-all duration-500">Live Grid</button>
-             <button className="bg-white border border-stone-200 text-stone-900 px-8 py-4 font-serif text-xs uppercase tracking-widest hover:bg-stone-50 transition-all duration-500">Settings</button>
+          <div className="flex-1 space-y-2">
+             {menuItems.map(item => (
+               <button
+                 key={item.id}
+                 onClick={() => setActiveView(item.id)}
+                 className={}
+               >
+                  <item.icon className="w-4 h-4" /> {item.label}
+               </button>
+             ))}
           </div>
-        </header>
+       </div>
 
-        <AvailabilityCalendar />
-        <RoomRack />
-
-        <div className="grid grid-cols-1 lg:grid-cols-12 gap-16">
-          <div className="lg:col-span-8 space-y-16">
-            <HousekeepingDashboard />
-            <div className="bg-white p-12 shadow-sm border border-stone-100">
-               <h3 className="text-2xl font-serif mb-12 border-b border-stone-50 pb-6">Operations</h3>
-               <div className="space-y-16">
-                  <WalkInBookingForm />
-                  <div className="grid grid-cols-1 md:grid-cols-2 gap-12 pt-12 border-t border-stone-100">
-                     <PayoutManagement />
-                     <StaffScheduling />
-                  </div>
-               </div>
-            </div>
-
-            <div className="bg-white p-12 shadow-sm border border-stone-100">
-               <h3 className="text-2xl font-serif mb-12 border-b border-stone-50 pb-6">Yield & Analytics</h3>
-               <PricingInsights />
-               <div className="pt-12 border-t border-stone-50">
-                  <SeasonalRateForm />
-               </div>
-            </div>
-          </div>
-
-          <div className="lg:col-span-4 space-y-16">
-            <div className="bg-white p-10 shadow-sm border border-stone-100">
-               <h3 className="text-xs font-bold uppercase tracking-widest text-stone-400 mb-8">Active Holds</h3>
-               <HoldActivityFeed />
-            </div>
-
-            <div className="bg-white p-10 shadow-sm border border-stone-100">
-               <h3 className="text-xs font-bold uppercase tracking-widest text-stone-400 mb-8">Inventory Mode</h3>
-               <InventoryConfig roomTypes={[]} />
-            </div>
-
-            <div className="bg-stone-900 text-white p-12 shadow-2xl relative overflow-hidden group">
-               <span className="text-[9px] font-bold uppercase tracking-widest text-gold block mb-4">Account Status</span>
-               <h3 className="text-2xl font-serif mb-6">Platinum Partnership</h3>
-               <p className="text-stone-400 text-sm mb-12 font-light leading-relaxed">Unlimited staff members, advanced yield management, and zero commission on direct bookings are active.</p>
-               <button className="w-full bg-white text-stone-900 py-5 font-serif text-xs uppercase tracking-widest hover:bg-gold hover:text-white transition-all duration-500 relative z-10">Manage Subscription</button>
-               <div className="absolute -bottom-10 -right-10 w-48 h-48 bg-gold/10 rounded-full blur-3xl group-hover:bg-gold/20 transition-all duration-1000" />
-            </div>
-
-            <div className="bg-white p-10 shadow-sm border border-stone-100">
-               <h3 className="text-xs font-bold uppercase tracking-widest text-stone-400 mb-8">Audit History</h3>
-               <AuditLog />
-            </div>
-          </div>
-        </div>
-      </div>
+       <div className="flex-1 overflow-y-auto">
+          <AnimatePresence mode="wait">
+             <motion.div
+               key={activeView}
+               initial={{ opacity: 0, y: 10 }}
+               animate={{ opacity: 1, y: 0 }}
+               exit={{ opacity: 0, y: -10 }}
+               transition={{ duration: 0.5, ease: "circOut" }}
+             >
+                {activeView === 'rooms' && <RoomRack />}
+                {activeView === 'arrivals' && <CheckInVerification hotelId={hotelId} />}
+                {activeView === 'cleaning' && <HousekeepingDashboard />}
+                {activeView === 'shifts' && <StaffScheduling hotelId={hotelId} />}
+                {activeView === 'media' && <div className="p-12"><MediaManagement /></div>}
+                {activeView === 'chat' && <StaffChatDashboard />}
+                {activeView === 'scanner' && <QRScannerView />}
+                {activeView === 'pricing' && <div className="p-12"><PricingInsights hotelId={hotelId} /></div>}
+                {activeView === 'channels' && <div className="p-12"><ChannelAllocationManager hotelId={hotelId} /></div>}
+                {activeView === 'partner' && <PartnerAccess hotelId={hotelId} />}
+                {activeView === 'payouts' && <PayoutManagement hotelId={hotelId} />}
+             </motion.div>
+          </AnimatePresence>
+       </div>
     </div>
   );
 };

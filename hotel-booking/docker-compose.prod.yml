@@ -4,59 +4,61 @@ services:
   db:
     image: postgis/postgis:15-3.3
     environment:
-      POSTGRES_DB: hotel_saas
-      POSTGRES_USER: admin
-      POSTGRES_PASSWORD: ${DB_PASSWORD}
+      POSTGRES_USER: ${POSTGRES_USER}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
+      POSTGRES_DB: ${POSTGRES_DB}
     volumes:
       - postgres_data:/var/lib/postgresql/data
-    healthcheck:
-      test: ["CMD-SHELL", "pg_isready -U admin -d hotel_saas"]
-      interval: 10s
-      timeout: 5s
-      retries: 5
+    deploy:
+      resources:
+        limits:
+          cpus: '2'
+          memory: 4G
 
   redis:
     image: redis:7-alpine
-    command: redis-server --requirepass ${REDIS_PASSWORD}
-    healthcheck:
-      test: ["CMD", "redis-cli", "ping"]
-      interval: 10s
+    command: redis-server --appendonly yes
+    volumes:
+      - redis_data:/data
 
   backend:
     build: ./backend
     environment:
-      DATABASE_URL: postgresql+asyncpg://admin:${DB_PASSWORD}@db/hotel_saas
-      REDIS_URL: redis://:${REDIS_PASSWORD}@redis:6379/0
+      DATABASE_URL: postgresql+asyncpg://${POSTGRES_USER}:${POSTGRES_PASSWORD}@db:5432/${POSTGRES_DB}
+      REDIS_URL: redis://redis:6379/0
+      SECRET_KEY: ${SECRET_KEY}
+      WORKERS_COUNT: 4
     depends_on:
-      db:
-        condition: service_healthy
-      redis:
-        condition: service_healthy
-    restart: always
-    logging:
-      driver: "json-file"
-      options:
-        max-size: "100mb"
-        max-file: "3"
+      - db
+      - redis
+    command: gunicorn app.main:app -w 4 -k uvicorn.workers.UvicornWorker -b 0.0.0.0:8000
 
   worker:
     build: ./backend
     command: celery -A app.worker.celery_app worker --loglevel=info
     environment:
-      DATABASE_URL: postgresql+asyncpg://admin:${DB_PASSWORD}@db/hotel_saas
-      REDIS_URL: redis://:${REDIS_PASSWORD}@redis:6379/0
+      DATABASE_URL: postgresql+asyncpg://${POSTGRES_USER}:${POSTGRES_PASSWORD}@db:5432/${POSTGRES_DB}
+      REDIS_URL: redis://redis:6379/0
     depends_on:
-      - db
+      - redis
+
+  beat:
+    build: ./backend
+    command: celery -A app.worker.celery_app beat --loglevel=info
+    environment:
+      REDIS_URL: redis://redis:6379/0
+    depends_on:
       - redis
 
   frontend:
     build:
       context: ./frontend
-      args:
-        VITE_API_URL: https://api.hotel.bt
+      dockerfile: Dockerfile
     ports:
       - "80:80"
-    restart: always
+    depends_on:
+      - backend
 
 volumes:
   postgres_data:
+  redis_data:
